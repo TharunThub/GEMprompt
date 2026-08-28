@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   RequisitionInput,
   SourcingActionPlan,
@@ -43,12 +43,20 @@ const STORAGE_SETTINGS = 'gemprompt_api_settings_v1';
 export type ActiveTabType = 'all' | 'persona' | 'boolean' | 'companies' | 'outreach' | 'checklist';
 
 export function App() {
-  const [input, setInput] = useState<RequisitionInput>(PRESET_REQUISITIONS[0].input);
+  // 1. Start on fresh New Intake form by default
+  const [input, setInput] = useState<RequisitionInput>({
+    title: '',
+    location: '',
+    seniority: '',
+    workModel: 'Hybrid',
+    jobDescription: '',
+    intakeNotes: ''
+  });
   const [activePlan, setActivePlan] = useState<SourcingActionPlan | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<ActiveTabType>('all');
 
-  // Modals
+  // Modals & Collapse state (starts expanded on the Intake Studio form)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSavedOpen, setIsSavedOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
@@ -74,11 +82,6 @@ export function App() {
     }
     return [];
   });
-
-  // Auto-generate on first load
-  useEffect(() => {
-    handleGenerate(PRESET_REQUISITIONS[0].input);
-  }, []);
 
   const handleInputChange = (field: keyof RequisitionInput, value: string) => {
     setInput(prev => ({ ...prev, [field]: value }));
@@ -156,20 +159,17 @@ export function App() {
 
   return (
     <div className="min-h-screen bg-[#f0f6ff] text-slate-900 flex flex-col selection:bg-blue-600 selection:text-white w-full overflow-x-hidden">
-      {/* Top Clean Navbar (Logo on Left, Profile with Settings on Right) */}
+      {/* Top Navbar */}
       <Navbar
         onOpenSettings={() => setIsSettingsOpen(true)}
-        onHomeClick={() => {
-          setIsInputCollapsed(false);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }}
+        onHomeClick={handleNewRequisition}
       />
 
-      {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      {/* Main Content */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-7">
         
-        {/* 1. Appealing Greeting & Global Action Hub (Above Role Section) */}
-        <section className="bg-white/80 border border-blue-100/90 rounded-2xl p-6 sm:p-7 shadow-xs backdrop-blur-xs flex flex-col md:flex-row md:items-center justify-between gap-5">
+        {/* 1. Appealing Greeting & Orderly Action Toolbar */}
+        <section className="bg-white border border-blue-100 rounded-2xl p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-5">
           <div>
             <div className="flex items-center space-x-2 text-blue-600 font-extrabold text-xs tracking-wider uppercase">
               <Sparkles className="w-4 h-4" />
@@ -178,25 +178,25 @@ export function App() {
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-1">
               Hello, <span className="text-blue-600">Recruiter</span> ✨
             </h1>
-            <p className="text-sm text-slate-500 font-medium mt-1">
-              Transform raw Job Descriptions and Hiring Manager intake notes into copy-paste sourcing action plans.
+            <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
+              Paste your Job Description & Hiring Manager notes to craft a high-conversion sourcing action plan.
             </p>
           </div>
 
-          {/* Action Toolbar (New Intake, Sample Requisitions, Vault) */}
-          <div className="flex items-center space-x-3 flex-wrap gap-y-2">
+          {/* Cleanly Aligned & Ordered Global Action Buttons */}
+          <div className="flex items-center space-x-2.5 flex-nowrap shrink-0 overflow-x-auto pb-1 md:pb-0">
             <button
               onClick={handleNewRequisition}
-              className="flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition transform hover:-translate-y-0.5"
+              className="h-10 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition flex items-center space-x-1.5 shrink-0"
             >
               <Plus className="w-4 h-4 stroke-[2.5]" />
               <span>New Intake</span>
             </button>
 
             {/* Quick Sample Selector */}
-            <div className="relative">
+            <div className="relative shrink-0">
               <select
-                className="bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-bold rounded-xl px-4 py-2.5 border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-2xs transition"
+                className="h-10 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-bold rounded-xl px-3.5 pr-8 border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-2xs transition appearance-none"
                 defaultValue=""
                 onChange={(e) => {
                   const found = PRESET_REQUISITIONS.find(p => p.id === e.target.value);
@@ -213,12 +213,15 @@ export function App() {
                   </option>
                 ))}
               </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-500 text-xs font-bold">
+                ▼
+              </div>
             </div>
 
             {/* Sourcing Vault Button */}
             <button
               onClick={() => setIsSavedOpen(true)}
-              className="flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-bold border border-slate-300 shadow-2xs transition"
+              className="h-10 px-3.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-bold border border-slate-300 shadow-2xs transition flex items-center space-x-1.5 shrink-0"
             >
               <Bookmark className="w-4 h-4 text-amber-500" />
               <span>Vault</span>
@@ -231,7 +234,7 @@ export function App() {
           </div>
         </section>
 
-        {/* 2. Requisition Studio Input Workspace (when editing) */}
+        {/* 2. Requisition Studio Input Form (Opens by Default on First Load) */}
         {!isInputCollapsed && (
           <section id="studio" className="transition-all duration-200">
             <InputPanel
@@ -244,17 +247,17 @@ export function App() {
           </section>
         )}
 
-        {/* 3. Active Role Section Hub & Navigation Tabs Directly Underneath */}
+        {/* 3. Active Sourcing Plan Dashboard */}
         {activePlan && (
           <section className="space-y-8">
             
-            {/* Role Header Card */}
+            {/* Active Role Card with Cleanly Aligned Action Buttons */}
             <div className="bg-white border border-blue-100 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
               
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 border-b border-slate-100 pb-6">
                 <div className="flex items-start space-x-4 min-w-0">
-                  <div className="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 shadow-2xs flex-shrink-0 mt-0.5">
-                    <Gem className="w-7 h-7" />
+                  <div className="w-13 h-13 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 shadow-2xs shrink-0 mt-0.5">
+                    <Gem className="w-6 h-6" />
                   </div>
                   <div className="min-w-0 space-y-1.5">
                     <div className="flex items-center space-x-3 flex-wrap">
@@ -287,39 +290,39 @@ export function App() {
                   </div>
                 </div>
 
-                {/* Role Quick Controls */}
-                <div className="flex items-center space-x-2.5 flex-wrap">
+                {/* Cleanly Aligned In-Order Role Action Buttons */}
+                <div className="flex items-center space-x-2 flex-nowrap shrink-0 overflow-x-auto pb-1 lg:pb-0">
                   <button
                     onClick={() => {
                       setIsInputCollapsed(false);
                       window.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
-                    className="px-4 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold border border-slate-300 flex items-center space-x-1.5 transition shadow-2xs"
+                    className="h-9 px-3.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold border border-slate-300 flex items-center space-x-1.5 transition shadow-2xs shrink-0"
                   >
-                    <Edit3 className="w-4 h-4 text-blue-600" />
+                    <Edit3 className="w-3.5 h-3.5 text-blue-600" />
                     <span>Edit JD / Notes</span>
                   </button>
 
                   <button
                     onClick={() => handleGenerate()}
                     disabled={isLoading}
-                    className="px-4 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold border border-slate-300 flex items-center space-x-1.5 transition shadow-2xs"
+                    className="h-9 px-3.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold border border-slate-300 flex items-center space-x-1.5 transition shadow-2xs shrink-0"
                   >
-                    <RefreshCw className={`w-4 h-4 text-blue-600 ${isLoading ? 'animate-spin' : ''}`} />
+                    <RefreshCw className={`w-3.5 h-3.5 text-blue-600 ${isLoading ? 'animate-spin' : ''}`} />
                     <span>Regenerate</span>
                   </button>
 
                   <button
                     onClick={() => setIsExportOpen(true)}
-                    className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold flex items-center space-x-1.5 transition shadow-sm"
+                    className="h-9 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center space-x-1.5 transition shadow-sm shrink-0"
                   >
-                    <Share2 className="w-4 h-4" />
+                    <Share2 className="w-3.5 h-3.5" />
                     <span>Export Brief</span>
                   </button>
                 </div>
               </div>
 
-              {/* Section Sub-Navigation Tabs Showcase Under Role Card */}
+              {/* Sourcing Pillars Tabs Under the Role Card */}
               <div className="pt-1">
                 <div className="flex items-center justify-between gap-3 mb-3">
                   <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500">
@@ -404,7 +407,7 @@ export function App() {
 
             </div>
 
-            {/* 4. Sourcing Content Display */}
+            {/* Sourcing Content Cards */}
             <div className="space-y-8">
               {(activeTab === 'all' || activeTab === 'persona') && (
                 <PersonaSummaryCard summary={activePlan.personaSummary} />
@@ -432,7 +435,7 @@ export function App() {
 
       </main>
 
-      {/* Clean Footer */}
+      {/* Footer */}
       <footer className="border-t border-blue-100 bg-white py-6 text-center text-xs text-slate-500 shadow-2xs mt-12">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center space-x-2">
