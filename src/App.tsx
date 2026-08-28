@@ -7,7 +7,7 @@ import {
 } from './types/sourcing';
 import { PRESET_REQUISITIONS } from './data/presets';
 import { generateSourcingStrategy } from './services/aiGenerator';
-import { Navbar, NavSection } from './components/Navbar';
+import { Navbar } from './components/Navbar';
 import { InputPanel } from './components/InputPanel';
 import { PersonaSummaryCard } from './components/PersonaSummaryCard';
 import { BooleanStringsCard } from './components/BooleanStringsCard';
@@ -25,18 +25,28 @@ import {
   Briefcase,
   Clock,
   Gem,
-  Plus
+  Plus,
+  Bookmark,
+  Sparkles,
+  UserCheck,
+  Search,
+  Building2,
+  Mail,
+  ListChecks,
+  Layers
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 const STORAGE_SAVED_PLANS = 'gemprompt_saved_plans_v1';
 const STORAGE_SETTINGS = 'gemprompt_api_settings_v1';
 
+export type ActiveTabType = 'all' | 'persona' | 'boolean' | 'companies' | 'outreach' | 'checklist';
+
 export function App() {
   const [input, setInput] = useState<RequisitionInput>(PRESET_REQUISITIONS[0].input);
   const [activePlan, setActivePlan] = useState<SourcingActionPlan | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [activeSection, setActiveSection] = useState<NavSection>('studio');
+  const [activeTab, setActiveTab] = useState<ActiveTabType>('all');
 
   // Modals
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -90,7 +100,7 @@ export function App() {
     });
     setActivePlan(null);
     setIsInputCollapsed(false);
-    setActiveSection('studio');
+    setActiveTab('all');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -101,7 +111,7 @@ export function App() {
       const plan = await generateSourcingStrategy(targetInput, settings);
       setActivePlan(plan);
       setIsInputCollapsed(true);
-      setActiveSection('persona');
+      setActiveTab('all');
 
       // Auto save to vault
       setSavedPlans(prev => {
@@ -133,7 +143,7 @@ export function App() {
     setInput(plan.input);
     setActivePlan(plan);
     setIsInputCollapsed(true);
-    setActiveSection('persona');
+    setActiveTab('all');
   };
 
   const handleDeletePlan = (id: string) => {
@@ -144,109 +154,86 @@ export function App() {
     });
   };
 
-  const handleSelectNavSection = (section: NavSection) => {
-    setActiveSection(section);
-    if (section === 'studio') {
-      setIsInputCollapsed(false);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else {
-      const element = document.getElementById(section);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-[#f0f6ff] text-slate-900 flex flex-col selection:bg-blue-600 selection:text-white">
-      {/* Top Navbar with Accessible New Button & Brand */}
+    <div className="min-h-screen bg-[#f0f6ff] text-slate-900 flex flex-col selection:bg-blue-600 selection:text-white w-full overflow-x-hidden">
+      {/* Top Clean Navbar (Logo on Left, Profile with Settings on Right) */}
       <Navbar
-        activeSection={activeSection}
-        onSelectSection={handleSelectNavSection}
-        onSelectPreset={handleSelectPreset}
         onOpenSettings={() => setIsSettingsOpen(true)}
-        onOpenSaved={() => setIsSavedOpen(true)}
-        onNewRequisition={handleNewRequisition}
-        savedCount={savedPlans.length}
-        hasActivePlan={!!activePlan}
+        onHomeClick={() => {
+          setIsInputCollapsed(false);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
       />
 
-      {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-7 space-y-7">
+      {/* Main Content Area */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         
-        {/* Requisition Intake Header Summary Card */}
-        {isInputCollapsed && activePlan && (
-          <div className="bg-white border border-blue-100 rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
-            <div className="flex items-center space-x-4 min-w-0">
-              <div className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 shadow-2xs flex-shrink-0">
-                <Gem className="w-6 h-6" />
-              </div>
-              <div className="min-w-0">
-                <div className="flex items-center space-x-2.5 flex-wrap">
-                  <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 truncate">
-                    {activePlan.input.title || 'Untitled Requisition'}
-                  </h2>
-                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase tracking-wider">
-                    Plan Active
-                  </span>
-                </div>
-                <div className="flex items-center space-x-3 text-xs sm:text-sm text-slate-500 mt-1 flex-wrap gap-y-1 font-medium">
-                  {activePlan.input.location && (
-                    <span className="flex items-center space-x-1">
-                      <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                      <span>{activePlan.input.location}</span>
-                    </span>
-                  )}
-                  {activePlan.input.seniority && (
-                    <span className="flex items-center space-x-1">
-                      <Briefcase className="w-3.5 h-3.5 text-slate-400" />
-                      <span>{activePlan.input.seniority}</span>
-                    </span>
-                  )}
-                  <span className="flex items-center space-x-1">
-                    <Clock className="w-3.5 h-3.5 text-slate-400" />
-                    <span>{new Date(activePlan.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                  </span>
-                </div>
-              </div>
+        {/* 1. Appealing Greeting & Global Action Hub (Above Role Section) */}
+        <section className="bg-white/80 border border-blue-100/90 rounded-2xl p-6 sm:p-7 shadow-xs backdrop-blur-xs flex flex-col md:flex-row md:items-center justify-between gap-5">
+          <div>
+            <div className="flex items-center space-x-2 text-blue-600 font-extrabold text-xs tracking-wider uppercase">
+              <Sparkles className="w-4 h-4" />
+              <span>AI Sourcing Strategist</span>
             </div>
-
-            {/* Action Buttons */}
-            <div className="flex items-center space-x-2.5 self-stretch sm:self-auto justify-end flex-shrink-0">
-              <button
-                onClick={() => {
-                  setIsInputCollapsed(false);
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-                className="px-3.5 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold border border-slate-300 flex items-center space-x-1.5 transition shadow-2xs"
-              >
-                <Edit3 className="w-3.5 h-3.5 text-blue-600" />
-                <span>Edit Intake</span>
-              </button>
-
-              <button
-                onClick={() => handleGenerate()}
-                disabled={isLoading}
-                className="px-3.5 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold border border-slate-300 flex items-center space-x-1.5 transition shadow-2xs"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 text-blue-600 ${isLoading ? 'animate-spin' : ''}`} />
-                <span>Refresh</span>
-              </button>
-
-              <button
-                onClick={() => setIsExportOpen(true)}
-                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold flex items-center space-x-1.5 transition shadow-sm"
-              >
-                <Share2 className="w-3.5 h-3.5" />
-                <span>Export Brief</span>
-              </button>
-            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-1">
+              Hello, <span className="text-blue-600">Recruiter</span> ✨
+            </h1>
+            <p className="text-sm text-slate-500 font-medium mt-1">
+              Transform raw Job Descriptions and Hiring Manager intake notes into copy-paste sourcing action plans.
+            </p>
           </div>
-        )}
 
-        {/* Requisition Studio Input (when expanded) */}
+          {/* Action Toolbar (New Intake, Sample Requisitions, Vault) */}
+          <div className="flex items-center space-x-3 flex-wrap gap-y-2">
+            <button
+              onClick={handleNewRequisition}
+              className="flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition transform hover:-translate-y-0.5"
+            >
+              <Plus className="w-4 h-4 stroke-[2.5]" />
+              <span>New Intake</span>
+            </button>
+
+            {/* Quick Sample Selector */}
+            <div className="relative">
+              <select
+                className="bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-bold rounded-xl px-4 py-2.5 border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-2xs transition"
+                defaultValue=""
+                onChange={(e) => {
+                  const found = PRESET_REQUISITIONS.find(p => p.id === e.target.value);
+                  if (found) {
+                    handleSelectPreset(found);
+                    e.target.value = '';
+                  }
+                }}
+              >
+                <option value="" disabled>⚡ Sample Requisitions...</option>
+                {PRESET_REQUISITIONS.map(p => (
+                  <option key={p.id} value={p.id}>
+                    {p.badge} — {p.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Sourcing Vault Button */}
+            <button
+              onClick={() => setIsSavedOpen(true)}
+              className="flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-bold border border-slate-300 shadow-2xs transition"
+            >
+              <Bookmark className="w-4 h-4 text-amber-500" />
+              <span>Vault</span>
+              {savedPlans.length > 0 && (
+                <span className="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                  {savedPlans.length}
+                </span>
+              )}
+            </button>
+          </div>
+        </section>
+
+        {/* 2. Requisition Studio Input Workspace (when editing) */}
         {!isInputCollapsed && (
-          <section id="studio">
+          <section id="studio" className="transition-all duration-200">
             <InputPanel
               input={input}
               onChange={handleInputChange}
@@ -257,27 +244,203 @@ export function App() {
           </section>
         )}
 
-        {/* 5-Pillar Sourcing Action Plan View (Seamless, executive layout) */}
+        {/* 3. Active Role Section Hub & Navigation Tabs Directly Underneath */}
         {activePlan && (
           <section className="space-y-8">
-            <PersonaSummaryCard summary={activePlan.personaSummary} />
-            <BooleanStringsCard booleanStrings={activePlan.booleanStrings} />
-            <CompanyMappingCard companyMapping={activePlan.companyMapping} />
-            <OutreachStrategyCard outreach={activePlan.outreachStrategy} />
-            <DayOneChecklistCard checklist={activePlan.dayOneChecklist} />
+            
+            {/* Role Header Card */}
+            <div className="bg-white border border-blue-100 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+              
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 border-b border-slate-100 pb-6">
+                <div className="flex items-start space-x-4 min-w-0">
+                  <div className="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 shadow-2xs flex-shrink-0 mt-0.5">
+                    <Gem className="w-7 h-7" />
+                  </div>
+                  <div className="min-w-0 space-y-1.5">
+                    <div className="flex items-center space-x-3 flex-wrap">
+                      <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+                        {activePlan.input.title || 'Untitled Requisition'}
+                      </h2>
+                      <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase tracking-wider">
+                        Strategy Active
+                      </span>
+                    </div>
+
+                    <div className="flex items-center space-x-4 text-xs sm:text-sm text-slate-600 flex-wrap gap-y-1 font-medium">
+                      {activePlan.input.location && (
+                        <span className="flex items-center space-x-1.5">
+                          <MapPin className="w-4 h-4 text-slate-400" />
+                          <span>{activePlan.input.location}</span>
+                        </span>
+                      )}
+                      {activePlan.input.seniority && (
+                        <span className="flex items-center space-x-1.5">
+                          <Briefcase className="w-4 h-4 text-slate-400" />
+                          <span>{activePlan.input.seniority}</span>
+                        </span>
+                      )}
+                      <span className="flex items-center space-x-1.5">
+                        <Clock className="w-4 h-4 text-slate-400" />
+                        <span>Generated at {new Date(activePlan.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Role Quick Controls */}
+                <div className="flex items-center space-x-2.5 flex-wrap">
+                  <button
+                    onClick={() => {
+                      setIsInputCollapsed(false);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className="px-4 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold border border-slate-300 flex items-center space-x-1.5 transition shadow-2xs"
+                  >
+                    <Edit3 className="w-4 h-4 text-blue-600" />
+                    <span>Edit JD / Notes</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleGenerate()}
+                    disabled={isLoading}
+                    className="px-4 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold border border-slate-300 flex items-center space-x-1.5 transition shadow-2xs"
+                  >
+                    <RefreshCw className={`w-4 h-4 text-blue-600 ${isLoading ? 'animate-spin' : ''}`} />
+                    <span>Regenerate</span>
+                  </button>
+
+                  <button
+                    onClick={() => setIsExportOpen(true)}
+                    className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold flex items-center space-x-1.5 transition shadow-sm"
+                  >
+                    <Share2 className="w-4 h-4" />
+                    <span>Export Brief</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Section Sub-Navigation Tabs Showcase Under Role Card */}
+              <div className="pt-1">
+                <div className="flex items-center justify-between gap-3 mb-3">
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500">
+                    Sourcing Pillars for {activePlan.input.title}:
+                  </span>
+                </div>
+
+                <div className="flex items-center space-x-2 overflow-x-auto pb-1 max-w-full">
+                  <button
+                    onClick={() => setActiveTab('all')}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center space-x-2 transition whitespace-nowrap ${
+                      activeTab === 'all'
+                        ? 'bg-blue-600 text-white shadow-xs'
+                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    }`}
+                  >
+                    <Layers className="w-4 h-4" />
+                    <span>All 5 Pillars</span>
+                  </button>
+
+                  <button
+                    onClick={() => setActiveTab('persona')}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center space-x-2 transition whitespace-nowrap ${
+                      activeTab === 'persona'
+                        ? 'bg-blue-600 text-white shadow-xs'
+                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    }`}
+                  >
+                    <UserCheck className="w-4 h-4" />
+                    <span>1. Persona & Criteria</span>
+                  </button>
+
+                  <button
+                    onClick={() => setActiveTab('boolean')}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center space-x-2 transition whitespace-nowrap ${
+                      activeTab === 'boolean'
+                        ? 'bg-blue-600 text-white shadow-xs'
+                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    }`}
+                  >
+                    <Search className="w-4 h-4" />
+                    <span>2. Boolean Strings</span>
+                  </button>
+
+                  <button
+                    onClick={() => setActiveTab('companies')}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center space-x-2 transition whitespace-nowrap ${
+                      activeTab === 'companies'
+                        ? 'bg-blue-600 text-white shadow-xs'
+                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    }`}
+                  >
+                    <Building2 className="w-4 h-4" />
+                    <span>3. Target Companies</span>
+                  </button>
+
+                  <button
+                    onClick={() => setActiveTab('outreach')}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center space-x-2 transition whitespace-nowrap ${
+                      activeTab === 'outreach'
+                        ? 'bg-blue-600 text-white shadow-xs'
+                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    }`}
+                  >
+                    <Mail className="w-4 h-4" />
+                    <span>4. Outreach & InMail</span>
+                  </button>
+
+                  <button
+                    onClick={() => setActiveTab('checklist')}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center space-x-2 transition whitespace-nowrap ${
+                      activeTab === 'checklist'
+                        ? 'bg-blue-600 text-white shadow-xs'
+                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    }`}
+                  >
+                    <ListChecks className="w-4 h-4" />
+                    <span>5. Day-1 Checklist</span>
+                  </button>
+                </div>
+              </div>
+
+            </div>
+
+            {/* 4. Sourcing Content Display */}
+            <div className="space-y-8">
+              {(activeTab === 'all' || activeTab === 'persona') && (
+                <PersonaSummaryCard summary={activePlan.personaSummary} />
+              )}
+
+              {(activeTab === 'all' || activeTab === 'boolean') && (
+                <BooleanStringsCard booleanStrings={activePlan.booleanStrings} />
+              )}
+
+              {(activeTab === 'all' || activeTab === 'companies') && (
+                <CompanyMappingCard companyMapping={activePlan.companyMapping} />
+              )}
+
+              {(activeTab === 'all' || activeTab === 'outreach') && (
+                <OutreachStrategyCard outreach={activePlan.outreachStrategy} />
+              )}
+
+              {(activeTab === 'all' || activeTab === 'checklist') && (
+                <DayOneChecklistCard checklist={activePlan.dayOneChecklist} />
+              )}
+            </div>
+
           </section>
         )}
+
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-blue-100 bg-white py-6 text-center text-xs text-slate-500 shadow-2xs mt-8">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+      {/* Clean Footer */}
+      <footer className="border-t border-blue-100 bg-white py-6 text-center text-xs text-slate-500 shadow-2xs mt-12">
+        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center space-x-2">
             <Gem className="w-4 h-4 text-blue-600" />
-            <span className="font-bold text-slate-800">GEMprompt</span>
-            <span>— Talent Sourcing Strategy System</span>
+            <span className="font-bold text-slate-900">GEMprompt</span>
+            <span>— Talent Sourcing Intelligence System</span>
           </div>
-          <span className="text-slate-500">Built for Talent Sourcers, Recruiters & Hiring Teams</span>
+          <span className="text-slate-500 font-medium">Built for Talent Sourcers, Recruiters & Hiring Teams</span>
         </div>
       </footer>
 

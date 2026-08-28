@@ -1,193 +1,108 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Gem,
-  Plus,
-  Bookmark,
   Settings,
-  FileText,
-  UserCheck,
-  Search,
-  Building2,
-  Mail,
-  ListChecks,
-  Sparkles
+  User,
+  Sparkles,
+  ExternalLink,
+  ChevronDown
 } from 'lucide-react';
-import { PRESET_REQUISITIONS } from '../data/presets';
-import { PresetRequisition } from '../types/sourcing';
-
-export type NavSection = 'studio' | 'persona' | 'boolean' | 'companies' | 'outreach' | 'checklist';
 
 interface NavbarProps {
-  activeSection: NavSection;
-  onSelectSection: (section: NavSection) => void;
-  onSelectPreset: (preset: PresetRequisition) => void;
   onOpenSettings: () => void;
-  onOpenSaved: () => void;
-  onNewRequisition: () => void;
-  savedCount: number;
-  hasActivePlan: boolean;
+  onHomeClick: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
-  activeSection,
-  onSelectSection,
-  onSelectPreset,
   onOpenSettings,
-  onOpenSaved,
-  onNewRequisition,
-  savedCount,
-  hasActivePlan
+  onHomeClick
 }) => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   return (
-    <header className="sticky top-0 z-40 border-b border-blue-100 bg-white/95 backdrop-blur-md shadow-sm">
+    <header className="sticky top-0 z-40 border-b border-blue-100/80 bg-white/95 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="h-16 flex items-center justify-between gap-3">
+        <div className="h-16 flex items-center justify-between">
           
-          {/* Brand Logo & New Button */}
-          <div className="flex items-center space-x-3 sm:space-x-4">
-            <div
-              className="flex items-center space-x-2.5 cursor-pointer select-none group"
-              onClick={() => onSelectSection('studio')}
-            >
-              <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center shadow-md shadow-blue-500/20 text-white group-hover:scale-105 transition">
-                <Gem className="w-5 h-5" />
+          {/* Left: GEMprompt Logo Only */}
+          <div
+            className="flex items-center space-x-3 cursor-pointer select-none group"
+            onClick={onHomeClick}
+          >
+            <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center shadow-md shadow-blue-500/20 text-white group-hover:scale-105 transition">
+              <Gem className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center space-x-2">
+                <span className="font-extrabold text-xl text-slate-900 tracking-tight font-sans">
+                  GEM<span className="text-blue-600 font-bold">prompt</span>
+                </span>
+                <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                  AI Sourcing
+                </span>
               </div>
-              <div>
-                <div className="flex items-center space-x-2">
-                  <span className="font-extrabold text-xl text-slate-900 tracking-tight font-sans">
-                    GEM<span className="text-blue-600 font-bold">prompt</span>
-                  </span>
-                  <span className="text-xs font-bold tracking-wider uppercase px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                    v1.2
-                  </span>
+            </div>
+          </div>
+
+          {/* Right: Account / Profile Avatar with Settings Dropdown */}
+          <div className="relative" ref={menuRef}>
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="flex items-center space-x-2.5 p-1.5 pr-3 rounded-full hover:bg-slate-100 border border-slate-200/80 transition shadow-2xs"
+            >
+              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold text-xs shadow-xs">
+                GR
+              </div>
+              <div className="text-left hidden sm:block">
+                <div className="text-xs font-bold text-slate-800 leading-tight">GEM Recruiter</div>
+                <div className="text-[10px] text-slate-500 font-medium">Talent Lead</div>
+              </div>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+            </button>
+
+            {/* Profile Dropdown */}
+            {isMenuOpen && (
+              <div className="absolute right-0 mt-2 w-56 bg-white border border-slate-200 rounded-2xl shadow-xl p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="px-3 py-2 border-b border-slate-100">
+                  <p className="text-xs font-bold text-slate-900">GEM Recruiter Workspace</p>
+                  <p className="text-[11px] text-slate-500">recruiter@company.com</p>
+                </div>
+
+                <div className="py-1">
+                  <button
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      onOpenSettings();
+                    }}
+                    className="w-full flex items-center space-x-2 px-3 py-2 text-xs font-semibold text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition"
+                  >
+                    <Settings className="w-4 h-4 text-blue-600" />
+                    <span>AI Engine & API Settings</span>
+                  </button>
+                </div>
+
+                <div className="pt-1 border-t border-slate-100">
+                  <div className="px-3 py-1.5 text-[10px] text-slate-400 flex items-center justify-between">
+                    <span>Engine: Local Smart NLP</span>
+                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                  </div>
                 </div>
               </div>
-            </div>
-
-            {/* Prominent & Highly Accessible + New Requisition Button */}
-            <button
-              onClick={onNewRequisition}
-              className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition transform hover:-translate-y-0.5"
-              title="Create New Requisition Plan"
-            >
-              <Plus className="w-4 h-4 stroke-[2.5]" />
-              <span>New Intake</span>
-            </button>
+            )}
           </div>
 
-          {/* Center Section Links */}
-          {hasActivePlan && (
-            <nav className="hidden xl:flex items-center space-x-1 bg-slate-100/90 border border-slate-200/80 p-1 rounded-xl">
-              <button
-                onClick={() => onSelectSection('persona')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1.5 transition ${
-                  activeSection === 'persona'
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
-                }`}
-              >
-                <UserCheck className="w-3.5 h-3.5" />
-                <span>1. Persona</span>
-              </button>
-
-              <button
-                onClick={() => onSelectSection('boolean')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1.5 transition ${
-                  activeSection === 'boolean'
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
-                }`}
-              >
-                <Search className="w-3.5 h-3.5" />
-                <span>2. Boolean</span>
-              </button>
-
-              <button
-                onClick={() => onSelectSection('companies')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1.5 transition ${
-                  activeSection === 'companies'
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
-                }`}
-              >
-                <Building2 className="w-3.5 h-3.5" />
-                <span>3. Companies</span>
-              </button>
-
-              <button
-                onClick={() => onSelectSection('outreach')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1.5 transition ${
-                  activeSection === 'outreach'
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
-                }`}
-              >
-                <Mail className="w-3.5 h-3.5" />
-                <span>4. Outreach</span>
-              </button>
-
-              <button
-                onClick={() => onSelectSection('checklist')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1.5 transition ${
-                  activeSection === 'checklist'
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
-                }`}
-              >
-                <ListChecks className="w-3.5 h-3.5" />
-                <span>5. Checklist</span>
-              </button>
-            </nav>
-          )}
-
-          {/* Right Action Tools */}
-          <div className="flex items-center space-x-2">
-            {/* Quick Sample Selector */}
-            <div className="relative hidden md:block">
-              <select
-                className="bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-lg px-3 py-1.5 border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-2xs transition"
-                defaultValue=""
-                onChange={(e) => {
-                  const found = PRESET_REQUISITIONS.find(p => p.id === e.target.value);
-                  if (found) {
-                    onSelectPreset(found);
-                    e.target.value = '';
-                  }
-                }}
-              >
-                <option value="" disabled>⚡ Sample Requisitions...</option>
-                {PRESET_REQUISITIONS.map(p => (
-                  <option key={p.id} value={p.id}>
-                    {p.badge} — {p.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Vault Button */}
-            <button
-              onClick={onOpenSaved}
-              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold border border-slate-300 shadow-2xs transition"
-              title="Saved Plans Vault"
-            >
-              <Bookmark className="w-3.5 h-3.5 text-amber-500" />
-              <span>Vault</span>
-              {savedCount > 0 && (
-                <span className="bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full">
-                  {savedCount}
-                </span>
-              )}
-            </button>
-
-            {/* Settings Button */}
-            <button
-              onClick={onOpenSettings}
-              className="p-1.5 rounded-lg bg-white hover:bg-slate-50 text-slate-600 border border-slate-300 shadow-2xs transition"
-              title="Settings & AI Engine"
-            >
-              <Settings className="w-4 h-4" />
-            </button>
-          </div>
         </div>
       </div>
     </header>
