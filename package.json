@@ -6,17 +6,19 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "start": "serve -s dist -l tcp://0.0.0.0:$PORT",
     "preview": "vite preview"
   },
   "dependencies": {
-    "lucide-react": "^0.468.0",
-    "clsx": "^2.1.1",
-    "tailwind-merge": "^2.5.5",
     "canvas-confetti": "^1.9.3",
-    "jspdf": "^2.5.2",
+    "clsx": "^2.1.1",
     "html2canvas": "^1.4.1",
+    "jspdf": "^2.5.2",
+    "lucide-react": "^0.468.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "serve": "^14.2.6",
+    "tailwind-merge": "^2.5.5"
   },
   "devDependencies": {
     "@types/canvas-confetti": "^1.9.0",
