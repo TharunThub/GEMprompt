@@ -158,7 +158,7 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f0f6ff] text-slate-900 flex flex-col selection:bg-blue-600 selection:text-white w-full overflow-x-hidden">
+    <div className="min-h-screen bg-slate-100 text-slate-900 flex flex-col selection:bg-blue-600 selection:text-white w-full overflow-x-hidden">
       {/* Top Navbar */}
       <Navbar
         onOpenSettings={() => setIsSettingsOpen(true)}
