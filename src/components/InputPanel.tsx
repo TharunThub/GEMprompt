@@ -1,7 +1,8 @@
-import React from 'react';
-import { Sparkles, FileText, ClipboardList, MapPin, Briefcase, Zap, ArrowRight } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { Sparkles, FileText, ClipboardList, MapPin, Briefcase, Zap, ArrowRight, Paperclip, Loader2 } from 'lucide-react';
 import { RequisitionInput, PresetRequisition } from '../types/sourcing';
 import { PRESET_REQUISITIONS } from '../data/presets';
+import { parseFileToText } from '../services/fileParser';
 
 interface InputPanelProps {
   input: RequisitionInput;
@@ -19,6 +20,35 @@ export const InputPanel: React.FC<InputPanelProps> = ({
   isLoading
 }) => {
   const isReady = input.jobDescription.trim().length > 15 || input.intakeNotes.trim().length > 15;
+
+  const jdFileInputRef = useRef<HTMLInputElement>(null);
+  const hmFileInputRef = useRef<HTMLInputElement>(null);
+
+  const [isParsingJD, setIsParsingJD] = useState(false);
+  const [isParsingHM, setIsParsingHM] = useState(false);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'jobDescription' | 'intakeNotes') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (field === 'jobDescription') setIsParsingJD(true);
+    else setIsParsingHM(true);
+
+    try {
+      const extractedText = await parseFileToText(file);
+      // Append text with a newline if there's already content, or just set it
+      const currentText = input[field];
+      const newText = currentText ? `${currentText}\n\n--- Extracted from ${file.name} ---\n${extractedText}` : extractedText;
+      onChange(field, newText);
+    } catch (error: any) {
+      alert(`Error parsing file: ${error.message}`);
+    } finally {
+      if (field === 'jobDescription') setIsParsingJD(false);
+      else setIsParsingHM(false);
+      // Reset input so the same file can be selected again
+      e.target.value = '';
+    }
+  };
 
   return (
     <div className="bg-white border border-blue-100 rounded-2xl p-6 sm:p-7 shadow-sm space-y-6">
@@ -126,13 +156,32 @@ export const InputPanel: React.FC<InputPanelProps> = ({
               <FileText className="w-4 h-4 text-blue-600" />
               1. Job Description (JD)
             </label>
-            <span className="text-[11px] text-slate-400">
-              {input.jobDescription.length > 0 ? `${input.jobDescription.length} characters` : 'Paste official JD'}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-slate-400">
+                {input.jobDescription.length > 0 ? `${input.jobDescription.length} chars` : 'Paste official JD'}
+              </span>
+              <button
+                type="button"
+                onClick={() => jdFileInputRef.current?.click()}
+                disabled={isParsingJD}
+                className="flex items-center gap-1 text-[10px] font-bold bg-slate-100 hover:bg-slate-200 text-slate-600 px-2 py-1 rounded transition border border-slate-200"
+                title="Attach PDF or DOCX"
+              >
+                {isParsingJD ? <Loader2 className="w-3 h-3 animate-spin" /> : <Paperclip className="w-3 h-3" />}
+                Attach
+              </button>
+              <input 
+                type="file" 
+                ref={jdFileInputRef} 
+                accept=".pdf,.docx,.txt" 
+                className="hidden" 
+                onChange={(e) => handleFileUpload(e, 'jobDescription')}
+              />
+            </div>
           </div>
           <textarea
             rows={10}
-            placeholder="Paste complete Job Description here (Role summary, responsibilities, technical requirements, tech stack)..."
+            placeholder="Paste complete Job Description here (Role summary, responsibilities, technical requirements, tech stack) OR attach a file..."
             value={input.jobDescription}
             onChange={(e) => onChange('jobDescription', e.target.value)}
             className="w-full bg-slate-50/70 border border-slate-250 hover:border-slate-300 focus:bg-white focus:border-blue-500 rounded-xl p-3.5 text-xs font-mono text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition resize-y leading-relaxed"
@@ -146,13 +195,32 @@ export const InputPanel: React.FC<InputPanelProps> = ({
               <Sparkles className="w-4 h-4 text-amber-500" />
               2. Hiring Manager Intake Notes
             </label>
-            <span className="text-[11px] text-slate-400">
-              {input.intakeNotes.length > 0 ? `${input.intakeNotes.length} characters` : 'Crucial context / dealbreakers'}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-slate-400">
+                {input.intakeNotes.length > 0 ? `${input.intakeNotes.length} chars` : 'Crucial context'}
+              </span>
+              <button
+                type="button"
+                onClick={() => hmFileInputRef.current?.click()}
+                disabled={isParsingHM}
+                className="flex items-center gap-1 text-[10px] font-bold bg-slate-100 hover:bg-slate-200 text-slate-600 px-2 py-1 rounded transition border border-slate-200"
+                title="Attach PDF or DOCX"
+              >
+                {isParsingHM ? <Loader2 className="w-3 h-3 animate-spin" /> : <Paperclip className="w-3 h-3" />}
+                Attach
+              </button>
+              <input 
+                type="file" 
+                ref={hmFileInputRef} 
+                accept=".pdf,.docx,.txt" 
+                className="hidden" 
+                onChange={(e) => handleFileUpload(e, 'intakeNotes')}
+              />
+            </div>
           </div>
           <textarea
             rows={10}
-            placeholder={`Paste Hiring Manager intake call notes, e.g.:
+            placeholder={`Paste Hiring Manager intake call notes OR attach a file...
 - Must-Haves vs Flex Zones (e.g. Willing to relax YOE for tier-1 pedigree)
 - Dealbreakers / Disqualifiers (e.g. No service companies, notice < 60 days)
 - Target Companies to poach from (e.g. Razorpay, Swiggy, CRED)
