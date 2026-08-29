@@ -17,6 +17,7 @@ import { DayOneChecklistCard } from './components/DayOneChecklistCard';
 import { SettingsModal } from './components/SettingsModal';
 import { SavedRequisitionsModal } from './components/SavedRequisitionsModal';
 import { ExportModal } from './components/ExportModal';
+import { RegeneratePromptModal } from './components/RegeneratePromptModal';
 import {
   Share2,
   RefreshCw,
@@ -60,6 +61,7 @@ export function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSavedOpen, setIsSavedOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
+  const [isRegenerateOpen, setIsRegenerateOpen] = useState(false);
   const [isInputCollapsed, setIsInputCollapsed] = useState(false);
 
   // Settings & Saved Plans
@@ -89,7 +91,7 @@ export function App() {
 
   const handleSelectPreset = (preset: PresetRequisition) => {
     setInput(preset.input);
-    handleGenerate(preset.input);
+    handleGenerate(preset.input, false);
   };
 
   const handleNewRequisition = () => {
@@ -107,19 +109,58 @@ export function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleGenerate = async (customInput?: RequisitionInput) => {
+  const handleUpdateSection = <K extends keyof Omit<SourcingActionPlan, 'id' | 'createdAt' | 'input'>>(
+    section: K,
+    data: SourcingActionPlan[K]
+  ) => {
+    if (!activePlan) return;
+    const updatedPlan = { ...activePlan, [section]: data };
+    setActivePlan(updatedPlan);
+    
+    // Auto-save edited plan
+    setSavedPlans(prev => {
+      const filtered = prev.filter(p => p.id !== updatedPlan.id);
+      const updated = [updatedPlan, ...filtered].slice(0, 30);
+      localStorage.setItem(STORAGE_SAVED_PLANS, JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const handleGenerateClick = () => {
+    if (activePlan) {
+      setIsRegenerateOpen(true);
+    } else {
+      handleGenerate(undefined, false);
+    }
+  };
+
+  const handleGenerate = async (customInput?: RequisitionInput, keepEdits: boolean = false) => {
     const targetInput = customInput || input;
     setIsLoading(true);
     try {
       const plan = await generateSourcingStrategy(targetInput, settings);
-      setActivePlan(plan);
+      
+      let finalPlan = plan;
+      // If we want to keep manual edits, we merge existing activePlan sections over the new one
+      if (keepEdits && activePlan) {
+        finalPlan = {
+          ...plan,
+          personaSummary: activePlan.personaSummary,
+          booleanStrings: activePlan.booleanStrings,
+          companyMapping: activePlan.companyMapping,
+          outreachStrategy: activePlan.outreachStrategy,
+          dayOneChecklist: activePlan.dayOneChecklist
+        };
+      }
+
+      setActivePlan(finalPlan);
       setIsInputCollapsed(true);
       setActiveTab('all');
 
       // Auto save to vault
       setSavedPlans(prev => {
-        const filtered = prev.filter(p => p.id !== plan.id && p.input.title !== plan.input.title);
-        const updated = [plan, ...filtered].slice(0, 30);
+        const filtered = prev.filter(p => p.id !== finalPlan.id && p.input.title !== finalPlan.input.title);
+        const updated = [finalPlan, ...filtered].slice(0, 30);
         localStorage.setItem(STORAGE_SAVED_PLANS, JSON.stringify(updated));
         return updated;
       });
@@ -129,11 +170,12 @@ export function App() {
         spread: 40,
         origin: { y: 0.85 }
       });
-    } catch (error) {
-      console.error('Failed to generate sourcing plan', error);
-      alert('Error generating sourcing strategy. Please check your settings.');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (error: any) {
+      alert(`Error generating plan: ${error.message}`);
     } finally {
       setIsLoading(false);
+      setIsRegenerateOpen(false);
     }
   };
 
@@ -237,7 +279,7 @@ export function App() {
             <InputPanel
               input={input}
               onChange={handleInputChange}
-              onGenerate={() => handleGenerate()}
+              onGenerate={handleGenerateClick}
               onSelectPreset={handleSelectPreset}
               isLoading={isLoading}
             />
@@ -301,7 +343,7 @@ export function App() {
                   </button>
 
                   <button
-                    onClick={() => handleGenerate()}
+                    onClick={handleGenerateClick}
                     disabled={isLoading}
                     className="h-9 px-3.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold border border-slate-300 flex items-center space-x-1.5 transition shadow-2xs shrink-0"
                   >
@@ -401,23 +443,38 @@ export function App() {
             {/* Sourcing Content Cards */}
             <div className="space-y-8">
               {(activeTab === 'all' || activeTab === 'persona') && (
-                <PersonaSummaryCard summary={activePlan.personaSummary} />
+                <PersonaSummaryCard 
+                  summary={activePlan.personaSummary} 
+                  onUpdate={(data) => handleUpdateSection('personaSummary', data)}
+                />
               )}
 
               {(activeTab === 'all' || activeTab === 'boolean') && (
-                <BooleanStringsCard booleanStrings={activePlan.booleanStrings} />
+                <BooleanStringsCard 
+                  booleanStrings={activePlan.booleanStrings} 
+                  onUpdate={(data) => handleUpdateSection('booleanStrings', data)}
+                />
               )}
 
               {(activeTab === 'all' || activeTab === 'companies') && (
-                <CompanyMappingCard companyMapping={activePlan.companyMapping} />
+                <CompanyMappingCard 
+                  companyMapping={activePlan.companyMapping} 
+                  onUpdate={(data) => handleUpdateSection('companyMapping', data)}
+                />
               )}
 
               {(activeTab === 'all' || activeTab === 'outreach') && (
-                <OutreachStrategyCard outreach={activePlan.outreachStrategy} />
+                <OutreachStrategyCard 
+                  outreach={activePlan.outreachStrategy} 
+                  onUpdate={(data) => handleUpdateSection('outreachStrategy', data)}
+                />
               )}
 
               {(activeTab === 'all' || activeTab === 'checklist') && (
-                <DayOneChecklistCard checklist={activePlan.dayOneChecklist} />
+                <DayOneChecklistCard 
+                  checklist={activePlan.dayOneChecklist} 
+                  onUpdate={(data) => handleUpdateSection('dayOneChecklist', data)}
+                />
               )}
             </div>
 
@@ -452,6 +509,12 @@ export function App() {
         savedPlans={savedPlans}
         onLoadPlan={handleLoadPlan}
         onDeletePlan={handleDeletePlan}
+      />
+
+      <RegeneratePromptModal
+        isOpen={isRegenerateOpen}
+        onClose={() => setIsRegenerateOpen(false)}
+        onConfirm={(keepEdits) => handleGenerate(undefined, keepEdits)}
       />
 
       {activePlan && (

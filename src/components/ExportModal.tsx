@@ -69,45 +69,55 @@ ${p.dayOneChecklist.map((c, i) => `${i + 1}. [${c.category}] ${c.text}`).join('\
         </div>
 
         {/* Quick Actions Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
           <button
             onClick={() => downloadMarkdownFile(plan)}
-            className="p-4 rounded-xl bg-slate-50 border border-slate-200 hover:border-blue-400 text-left transition space-y-1.5 group shadow-2xs"
+            className="p-3 rounded-xl bg-slate-50 border border-slate-200 hover:border-blue-400 text-left transition space-y-1.5 group shadow-2xs"
           >
             <div className="flex items-center justify-between text-blue-600">
               <Download className="w-4 h-4" />
               <span className="text-[10px] font-bold uppercase tracking-wider bg-blue-100 px-1.5 py-0.5 rounded text-blue-800">.md</span>
             </div>
-            <div className="font-bold text-xs text-slate-900 group-hover:text-blue-600">Download Markdown</div>
-            <div className="text-[10px] text-slate-500">Full structured report</div>
+            <div className="font-bold text-xs text-slate-900 group-hover:text-blue-600">Markdown</div>
           </button>
 
           <button
-            onClick={() => copyToClipboard(markdownContent, 'markdown')}
-            className="p-4 rounded-xl bg-slate-50 border border-slate-200 hover:border-emerald-400 text-left transition space-y-1.5 group shadow-2xs"
+            onClick={() => {
+              import('../services/exportService').then(({ downloadPDFFile }) => downloadPDFFile(plan));
+            }}
+            className="p-3 rounded-xl bg-slate-50 border border-slate-200 hover:border-red-400 text-left transition space-y-1.5 group shadow-2xs"
           >
-            <div className="flex items-center justify-between text-emerald-600">
-              {copiedType === 'markdown' ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-              <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-100 px-1.5 py-0.5 rounded text-emerald-800">Clipboard</span>
+            <div className="flex items-center justify-between text-red-600">
+              <Download className="w-4 h-4" />
+              <span className="text-[10px] font-bold uppercase tracking-wider bg-red-100 px-1.5 py-0.5 rounded text-red-800">.pdf</span>
             </div>
-            <div className="font-bold text-xs text-slate-900 group-hover:text-emerald-600">
-              {copiedType === 'markdown' ? 'Copied Markdown!' : 'Copy Full Plan'}
+            <div className="font-bold text-xs text-slate-900 group-hover:text-red-600">PDF Document</div>
+          </button>
+
+          <button
+            onClick={() => {
+              import('../services/exportService').then(({ downloadDOCXFile }) => downloadDOCXFile(plan));
+            }}
+            className="p-3 rounded-xl bg-slate-50 border border-slate-200 hover:border-blue-500 text-left transition space-y-1.5 group shadow-2xs"
+          >
+            <div className="flex items-center justify-between text-blue-700">
+              <Download className="w-4 h-4" />
+              <span className="text-[10px] font-bold uppercase tracking-wider bg-blue-100 px-1.5 py-0.5 rounded text-blue-800">.docx</span>
             </div>
-            <div className="text-[10px] text-slate-500">All 5 sections in MD</div>
+            <div className="font-bold text-xs text-slate-900 group-hover:text-blue-700">Word Document</div>
           </button>
 
           <button
             onClick={() => copyToClipboard(generateSlackSummary(plan), 'slack')}
-            className="p-4 rounded-xl bg-slate-50 border border-slate-200 hover:border-amber-400 text-left transition space-y-1.5 group shadow-2xs"
+            className="p-3 rounded-xl bg-slate-50 border border-slate-200 hover:border-amber-400 text-left transition space-y-1.5 group shadow-2xs"
           >
             <div className="flex items-center justify-between text-amber-600">
               {copiedType === 'slack' ? <Check className="w-4 h-4" /> : <Send className="w-4 h-4" />}
-              <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-100 px-1.5 py-0.5 rounded text-amber-800">Slack / ATS</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-100 px-1.5 py-0.5 rounded text-amber-800">Slack</span>
             </div>
             <div className="font-bold text-xs text-slate-900 group-hover:text-amber-600">
-              {copiedType === 'slack' ? 'Copied Slack Note!' : 'Copy Slack/ATS Brief'}
+              {copiedType === 'slack' ? 'Copied Note!' : 'Copy Summary'}
             </div>
-            <div className="text-[10px] text-slate-500">Concise team kickoff note</div>
           </button>
         </div>
 
