@@ -164,7 +164,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
                 type="button"
                 onClick={() => jdFileInputRef.current?.click()}
                 disabled={isParsingJD}
-                className="flex items-center gap-1 text-[10px] font-bold bg-slate-100 hover:bg-slate-200 text-slate-600 px-2 py-1 rounded transition border border-slate-200"
+                className="flex items-center gap-1.5 text-xs font-bold bg-blue-50 hover:bg-blue-100 text-blue-600 px-3 py-1.5 rounded-lg transition border border-blue-200 shadow-sm"
                 title="Attach PDF or DOCX"
               >
                 {isParsingJD ? <Loader2 className="w-3 h-3 animate-spin" /> : <Paperclip className="w-3 h-3" />}
@@ -203,7 +203,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
                 type="button"
                 onClick={() => hmFileInputRef.current?.click()}
                 disabled={isParsingHM}
-                className="flex items-center gap-1 text-[10px] font-bold bg-slate-100 hover:bg-slate-200 text-slate-600 px-2 py-1 rounded transition border border-slate-200"
+                className="flex items-center gap-1.5 text-xs font-bold bg-blue-50 hover:bg-blue-100 text-blue-600 px-3 py-1.5 rounded-lg transition border border-blue-200 shadow-sm"
                 title="Attach PDF or DOCX"
               >
                 {isParsingHM ? <Loader2 className="w-3 h-3 animate-spin" /> : <Paperclip className="w-3 h-3" />}
