@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   RequisitionInput,
   SourcingActionPlan,
@@ -18,6 +18,7 @@ import { SettingsModal } from './components/SettingsModal';
 import { SavedRequisitionsModal } from './components/SavedRequisitionsModal';
 import { ExportModal } from './components/ExportModal';
 import { RegeneratePromptModal } from './components/RegeneratePromptModal';
+import { UnsavedChangesModal } from './components/UnsavedChangesModal';
 import {
   Share2,
   RefreshCw,
@@ -62,7 +63,22 @@ export function App() {
   const [isSavedOpen, setIsSavedOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isRegenerateOpen, setIsRegenerateOpen] = useState(false);
+  const [isUnsavedChangesOpen, setIsUnsavedChangesOpen] = useState(false);
   const [isInputCollapsed, setIsInputCollapsed] = useState(false);
+  
+  const [isPlanUnsaved, setIsPlanUnsaved] = useState(false);
+  const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isPlanUnsaved) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isPlanUnsaved]);
 
   // Settings & Saved Plans
   const [settings, setSettings] = useState<ApiSettings>(() => {
@@ -85,28 +101,60 @@ export function App() {
     return [];
   });
 
+  const handleInterceptAction = (action: () => void) => {
+    if (isPlanUnsaved) {
+      setPendingAction(() => action);
+      setIsUnsavedChangesOpen(true);
+    } else {
+      action();
+    }
+  };
+
+  const saveToVault = () => {
+    if (!activePlan) return;
+    setSavedPlans(prev => {
+      const filtered = prev.filter(p => p.id !== activePlan.id && p.input.title !== activePlan.input.title);
+      const updated = [activePlan, ...filtered].slice(0, 30);
+      localStorage.setItem(STORAGE_SAVED_PLANS, JSON.stringify(updated));
+      return updated;
+    });
+    setIsPlanUnsaved(false);
+  };
+
+  const executePendingAction = () => {
+    if (pendingAction) {
+      pendingAction();
+      setPendingAction(null);
+    }
+  };
+
   const handleInputChange = (field: keyof RequisitionInput, value: string) => {
     setInput(prev => ({ ...prev, [field]: value }));
   };
 
   const handleSelectPreset = (preset: PresetRequisition) => {
-    setInput(preset.input);
-    handleGenerate(preset.input, false);
+    handleInterceptAction(() => {
+      setInput(preset.input);
+      handleGenerate(preset.input, false);
+    });
   };
 
   const handleNewRequisition = () => {
-    setInput({
-      title: '',
-      location: '',
-      seniority: '',
-      workModel: 'Hybrid',
-      jobDescription: '',
-      intakeNotes: ''
+    handleInterceptAction(() => {
+      setInput({
+        title: '',
+        location: '',
+        seniority: '',
+        workModel: 'Hybrid',
+        jobDescription: '',
+        intakeNotes: ''
+      });
+      setActivePlan(null);
+      setIsPlanUnsaved(false);
+      setIsInputCollapsed(false);
+      setActiveTab('all');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     });
-    setActivePlan(null);
-    setIsInputCollapsed(false);
-    setActiveTab('all');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleUpdateSection = <K extends keyof Omit<SourcingActionPlan, 'id' | 'createdAt' | 'input'>>(
@@ -116,14 +164,7 @@ export function App() {
     if (!activePlan) return;
     const updatedPlan = { ...activePlan, [section]: data };
     setActivePlan(updatedPlan);
-    
-    // Auto-save edited plan
-    setSavedPlans(prev => {
-      const filtered = prev.filter(p => p.id !== updatedPlan.id);
-      const updated = [updatedPlan, ...filtered].slice(0, 30);
-      localStorage.setItem(STORAGE_SAVED_PLANS, JSON.stringify(updated));
-      return updated;
-    });
+    setIsPlanUnsaved(true);
   };
 
   const handleGenerateClick = () => {
@@ -154,16 +195,9 @@ export function App() {
       }
 
       setActivePlan(finalPlan);
+      setIsPlanUnsaved(true);
       setIsInputCollapsed(true);
       setActiveTab('all');
-
-      // Auto save to vault
-      setSavedPlans(prev => {
-        const filtered = prev.filter(p => p.id !== finalPlan.id && p.input.title !== finalPlan.input.title);
-        const updated = [finalPlan, ...filtered].slice(0, 30);
-        localStorage.setItem(STORAGE_SAVED_PLANS, JSON.stringify(updated));
-        return updated;
-      });
 
       confetti({
         particleCount: 40,
@@ -185,10 +219,13 @@ export function App() {
   };
 
   const handleLoadPlan = (plan: SourcingActionPlan) => {
-    setInput(plan.input);
-    setActivePlan(plan);
-    setIsInputCollapsed(true);
-    setActiveTab('all');
+    handleInterceptAction(() => {
+      setInput(plan.input);
+      setActivePlan(plan);
+      setIsPlanUnsaved(false);
+      setIsInputCollapsed(true);
+      setActiveTab('all');
+    });
   };
 
   const handleDeletePlan = (id: string) => {
@@ -352,6 +389,22 @@ export function App() {
                   </button>
 
                   <button
+                    onClick={() => {
+                      if (isPlanUnsaved) {
+                        saveToVault();
+                      }
+                    }}
+                    className={`h-9 px-3.5 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition shadow-sm shrink-0 border ${
+                      isPlanUnsaved
+                        ? 'bg-amber-100 hover:bg-amber-200 text-amber-800 border-amber-300'
+                        : 'bg-emerald-50 text-emerald-700 border-emerald-200 cursor-default opacity-80'
+                    }`}
+                  >
+                    <Bookmark className="w-3.5 h-3.5" />
+                    <span>{isPlanUnsaved ? 'Save to Vault' : 'Saved'}</span>
+                  </button>
+
+                  <button
                     onClick={() => setIsExportOpen(true)}
                     className="h-9 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center space-x-1.5 transition shadow-sm shrink-0"
                   >
@@ -509,6 +562,23 @@ export function App() {
         savedPlans={savedPlans}
         onLoadPlan={handleLoadPlan}
         onDeletePlan={handleDeletePlan}
+      />
+
+      <UnsavedChangesModal
+        isOpen={isUnsavedChangesOpen}
+        onClose={() => {
+          setIsUnsavedChangesOpen(false);
+          setPendingAction(null);
+        }}
+        onSaveAndContinue={() => {
+          saveToVault();
+          setIsUnsavedChangesOpen(false);
+          executePendingAction();
+        }}
+        onDiscardAndContinue={() => {
+          setIsUnsavedChangesOpen(false);
+          executePendingAction();
+        }}
       />
 
       <RegeneratePromptModal
