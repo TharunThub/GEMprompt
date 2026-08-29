@@ -139,25 +139,17 @@ export const BooleanStringsCard: React.FC<BooleanStringsCardProps> = ({ booleanS
   };
 
   return (
-    <div id="boolean" className="bg-white border border-blue-100 rounded-2xl p-6 sm:p-8 shadow-sm space-y-6 scroll-mt-20">
+    <div id="boolean" className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6 scroll-mt-20">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-slate-100 pb-5">
-        <div className="flex items-center space-x-3.5">
-          <div className="w-11 h-11 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 shadow-2xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
+        <div className="flex items-center space-x-4">
+          <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 border border-blue-100 shrink-0">
             <Search className="w-6 h-6" />
           </div>
           <div>
-            <div className="flex items-center space-x-2.5">
-              <span className="text-xs font-black uppercase tracking-wider text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-md border border-blue-200">
-                Section 2
-              </span>
-              <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-                Boolean Search Strings Engine
-              </h3>
-            </div>
-            <p className="text-sm text-slate-500 font-medium mt-1">
-              Copy-paste ready search strings tailored for LinkedIn Recruiter, Naukri, and Google X-ray
-            </p>
+            <h3 className="text-xl font-extrabold text-slate-900 tracking-tight">
+              Boolean Search Strings
+            </h3>
           </div>
         </div>
       </div>

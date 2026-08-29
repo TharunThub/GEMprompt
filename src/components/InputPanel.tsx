@@ -51,7 +51,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
   };
 
   return (
-    <div className="bg-white border border-blue-100 rounded-2xl p-6 sm:p-7 shadow-sm space-y-6">
+    <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-7 shadow-sm space-y-6">
       {/* Top Banner & Quick Presets */}
       <div>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
@@ -60,9 +60,6 @@ export const InputPanel: React.FC<InputPanelProps> = ({
               <ClipboardList className="w-5 h-5 text-blue-600" />
               Requisition Intake Studio
             </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Enter your Job Description and Hiring Manager Intake notes to generate the structured 5-pillar sourcing strategy.
-            </p>
           </div>
 
           <div className="flex items-center gap-1.5 flex-wrap">

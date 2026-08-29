@@ -169,7 +169,7 @@ export function App() {
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-7">
         
         {/* 1. Appealing Greeting & Orderly Action Toolbar */}
-        <section className="bg-white border border-blue-100 rounded-2xl p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-5">
+        <section className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-5">
           <div>
             <div className="flex items-center space-x-2 text-blue-600 font-extrabold text-xs tracking-wider uppercase">
               <Sparkles className="w-4 h-4" />
@@ -178,9 +178,6 @@ export function App() {
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-1">
               Hello, <span className="text-blue-600">Recruiter</span> ✨
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
-              Paste your Job Description & Hiring Manager notes to craft a high-conversion sourcing action plan.
-            </p>
           </div>
 
           {/* Cleanly Aligned & Ordered Global Action Buttons */}
@@ -252,7 +249,7 @@ export function App() {
           <section className="space-y-8">
             
             {/* Active Role Card with Cleanly Aligned Action Buttons */}
-            <div className="bg-white border border-blue-100 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+            <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
               
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 border-b border-slate-100 pb-6">
                 <div className="flex items-start space-x-4 min-w-0">
@@ -324,12 +321,6 @@ export function App() {
 
               {/* Sourcing Pillars Tabs Under the Role Card */}
               <div className="pt-1">
-                <div className="flex items-center justify-between gap-3 mb-3">
-                  <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500">
-                    Sourcing Pillars for {activePlan.input.title}:
-                  </span>
-                </div>
-
                 <div className="flex items-center space-x-2 overflow-x-auto pb-1 max-w-full">
                   <button
                     onClick={() => setActiveTab('all')}
