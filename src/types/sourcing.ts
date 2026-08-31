@@ -7,36 +7,60 @@ export interface RequisitionInput {
   intakeNotes: string;
 }
 
-export interface PersonaSummary {
+export interface ScorecardPillar {
+  pillar: string;
+  weight: string;
+  mustHaves: string;
+  flexZones: string;
+  dealbreakers: string;
+}
+
+export interface PersonaScorecard {
   targetProfile: string;
-  nonNegotiables: string[];
-  flexZones: string[];
-  dealbreakers: string[];
+  pillars: ScorecardPillar[];
 }
 
 export interface BooleanStringPlatformVariants {
   linkedInRecruiter: string;
   naukri: string;
   googleXray: string;
-  standard: string;
 }
 
 export interface BooleanSearchSection {
   broadSearch: BooleanStringPlatformVariants & { description: string };
   targetedSearch: BooleanStringPlatformVariants & { description: string };
   diversitySearch: BooleanStringPlatformVariants & { description: string };
+  naukriFilters: {
+    experience: string;
+    location: string;
+    noticePeriod: string;
+    salary: string;
+    activePeriod: string;
+  };
 }
 
-export interface CompanyMapping {
-  targetCompanies: {
-    name: string;
-    category: string;
-    rationale: string;
-  }[];
-  exclusions: {
-    name: string;
-    reason: string;
-  }[];
+export interface TargetSegment {
+  segment: string;
+  companies: string[];
+  businessUnits: string;
+  targetDesignations: string;
+  exclusions: string;
+}
+
+export interface CompanyMappingMatrix {
+  segments: TargetSegment[];
+}
+
+export interface JobPostingCopy {
+  naukri: {
+    headline: string;
+    keyTags: string[];
+    summary: string;
+  };
+  linkedIn: {
+    hook: string;
+    responsibilitiesAndRequirements: string[];
+  };
 }
 
 export interface OutreachStrategy {
@@ -58,9 +82,10 @@ export interface SourcingActionPlan {
   id: string;
   createdAt: string;
   input: RequisitionInput;
-  personaSummary: PersonaSummary;
+  personaScorecard: PersonaScorecard;
   booleanStrings: BooleanSearchSection;
-  companyMapping: CompanyMapping;
+  companyMapping: CompanyMappingMatrix;
+  jobPostingCopy: JobPostingCopy;
   outreachStrategy: OutreachStrategy;
   dayOneChecklist: ChecklistItem[];
 }

@@ -1,38 +1,62 @@
 import React, { useState, useEffect } from 'react';
-import { UserCheck, ShieldAlert, CheckCircle2, Sliders, Edit3, Save, X } from 'lucide-react';
-import { PersonaSummary } from '../types/sourcing';
+import { UserCheck, Edit3, Save, X, Plus, Trash2 } from 'lucide-react';
+import { PersonaScorecard, ScorecardPillar } from '../types/sourcing';
 
-interface PersonaSummaryCardProps {
-  summary: PersonaSummary;
-  onUpdate?: (data: PersonaSummary) => void;
+interface PersonaScorecardProps {
+  scorecard: PersonaScorecard;
+  onUpdate?: (data: PersonaScorecard) => void;
 }
 
-export const PersonaSummaryCard: React.FC<PersonaSummaryCardProps> = ({ summary, onUpdate }) => {
+export const PersonaSummaryCard: React.FC<PersonaScorecardProps> = ({ scorecard, onUpdate }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [editedData, setEditedData] = useState<PersonaSummary>(summary);
+  const [editedData, setEditedData] = useState<PersonaScorecard>(scorecard);
 
+  // Sync prop changes
   useEffect(() => {
-    setEditedData(summary);
-  }, [summary]);
+    // Graceful fallback during transition: if the app passes the old structure temporarily, 
+    // it won't crash when trying to access .pillars
+    if (scorecard && (scorecard as any).targetProfile && Array.isArray((scorecard as any).pillars)) {
+      setEditedData(scorecard);
+    }
+  }, [scorecard]);
 
   const handleSave = () => {
-    const cleanedData: PersonaSummary = {
-      ...editedData,
-      targetProfile: editedData.targetProfile.trim(),
-      nonNegotiables: editedData.nonNegotiables.map(s => s.trim()).filter(Boolean),
-      flexZones: editedData.flexZones.map(s => s.trim()).filter(Boolean),
-      dealbreakers: editedData.dealbreakers.map(s => s.trim()).filter(Boolean),
-    };
-    if (onUpdate) {
-      onUpdate(cleanedData);
-    }
+    if (onUpdate) onUpdate(editedData);
     setIsEditing(false);
   };
 
   const handleCancel = () => {
-    setEditedData(summary);
+    setEditedData(scorecard);
     setIsEditing(false);
   };
+
+  const updatePillar = (index: number, field: keyof ScorecardPillar, value: string) => {
+    setEditedData(prev => {
+      const newPillars = [...prev.pillars];
+      newPillars[index] = { ...newPillars[index], [field]: value };
+      return { ...prev, pillars: newPillars };
+    });
+  };
+
+  const addPillar = () => {
+    setEditedData(prev => ({
+      ...prev,
+      pillars: [
+        ...prev.pillars,
+        { pillar: 'New Pillar', weight: '10%', mustHaves: '', flexZones: '', dealbreakers: '' }
+      ]
+    }));
+  };
+
+  const removePillar = (index: number) => {
+    setEditedData(prev => ({
+      ...prev,
+      pillars: prev.pillars.filter((_, i) => i !== index)
+    }));
+  };
+
+  // Safe checks in case of old data format
+  const pillars = Array.isArray(editedData.pillars) ? editedData.pillars : [];
 
   return (
     <div id="persona" className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6 scroll-mt-20">
@@ -44,38 +68,38 @@ export const PersonaSummaryCard: React.FC<PersonaSummaryCardProps> = ({ summary,
           </div>
           <div>
             <h3 className="text-xl font-extrabold text-slate-900 tracking-tight">
-              Core Persona & Key Criteria Summary
+              Core Persona & 5-Pillar Scorecard
             </h3>
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div>
+        {/* Edit Controls */}
+        <div className="flex items-center space-x-2 shrink-0">
           {!isEditing ? (
             <button
               onClick={() => setIsEditing(true)}
-              className="px-3.5 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold border border-slate-300 flex items-center space-x-1.5 transition shadow-2xs cursor-pointer"
+              className="px-3.5 py-1.5 text-xs font-bold text-slate-600 hover:text-blue-600 bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-200 rounded-lg flex items-center space-x-1.5 transition"
             >
-              <Edit3 className="w-3.5 h-3.5 text-blue-600" />
+              <Edit3 className="w-3.5 h-3.5" />
               <span>Edit</span>
             </button>
           ) : (
-            <div className="flex items-center space-x-2">
+            <>
               <button
                 onClick={handleCancel}
-                className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center space-x-1.5 transition shadow-2xs cursor-pointer"
+                className="px-3.5 py-1.5 text-xs font-bold text-slate-600 hover:text-rose-600 bg-slate-50 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 rounded-lg flex items-center space-x-1.5 transition"
               >
                 <X className="w-3.5 h-3.5" />
                 <span>Cancel</span>
               </button>
               <button
                 onClick={handleSave}
-                className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center space-x-1.5 transition shadow-2xs cursor-pointer"
+                className="px-3.5 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center space-x-1.5 transition shadow-sm"
               >
                 <Save className="w-3.5 h-3.5" />
                 <span>Save</span>
               </button>
-            </div>
+            </>
           )}
         </div>
       </div>
@@ -84,111 +108,131 @@ export const PersonaSummaryCard: React.FC<PersonaSummaryCardProps> = ({ summary,
       <div className="bg-blue-50/70 border border-blue-200 rounded-xl p-5 sm:p-6 relative overflow-hidden">
         <div className="flex items-center space-x-2 text-xs font-black uppercase tracking-wider text-blue-800 mb-2">
           <span className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-ping mr-1" />
-          🎯 Target Profile Summary
+          Target Profile Narrative
         </div>
-        {isEditing ? (
-          <textarea
-            rows={3}
-            value={editedData.targetProfile}
-            onChange={(e) => setEditedData({ ...editedData, targetProfile: e.target.value })}
-            className="w-full p-3 bg-white border border-blue-300 rounded-xl text-sm sm:text-base text-slate-900 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
-            placeholder="Enter target profile summary..."
-          />
-        ) : (
+        {!isEditing ? (
           <p className="text-base sm:text-lg text-slate-900 leading-relaxed font-semibold">
-            {editedData.targetProfile}
+            {editedData.targetProfile || scorecard.targetProfile}
           </p>
+        ) : (
+          <textarea
+            className="w-full text-base sm:text-lg text-slate-900 leading-relaxed font-semibold bg-white border border-blue-300 rounded-lg p-3 min-h-[100px] focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={editedData.targetProfile || ''}
+            onChange={(e) => setEditedData({ ...editedData, targetProfile: e.target.value })}
+          />
         )}
       </div>
 
-      {/* Grid of 3 Pillars: Non-Negotiables, Flex Zones, Dealbreakers */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {/* Pillar 1: Non-Negotiables (Must Haves) */}
-        <div className="bg-emerald-50/40 border border-emerald-200 rounded-xl p-5 flex flex-col space-y-3.5 shadow-2xs">
-          <div className="flex items-center space-x-2 text-emerald-900 font-extrabold text-sm uppercase tracking-wider">
-            <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-            <span>Non-Negotiables (Must-Haves)</span>
-          </div>
-          {isEditing ? (
-            <div className="flex-1 flex flex-col space-y-1.5">
-              <textarea
-                rows={6}
-                value={editedData.nonNegotiables.join('\n')}
-                onChange={(e) => setEditedData({ ...editedData, nonNegotiables: e.target.value.split('\n') })}
-                className="w-full flex-1 p-3 bg-white border border-emerald-300 rounded-xl text-xs sm:text-sm text-slate-900 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20 shadow-2xs"
-                placeholder="One requirement per line..."
-              />
-              <span className="text-[11px] text-emerald-800/70 font-medium">One item per line</span>
-            </div>
-          ) : (
-            <ul className="space-y-2.5 text-sm text-slate-800 flex-1 font-medium">
-              {editedData.nonNegotiables.map((item, idx) => (
-                <li key={idx} className="flex items-start space-x-2.5 bg-white p-3 rounded-lg border border-emerald-100 shadow-2xs">
-                  <span className="text-emerald-600 font-bold text-base mt-[-2px]">•</span>
-                  <span className="leading-snug">{item}</span>
-                </li>
+      {/* 5-Pillar Scorecard Matrix */}
+      <div className="space-y-4">
+        <h4 className="font-bold text-slate-800 uppercase text-xs tracking-wider">Weighted Scorecard Matrix</h4>
+        <div className="overflow-x-auto rounded-xl border border-slate-200 shadow-2xs">
+          <table className="w-full text-left text-sm whitespace-nowrap sm:whitespace-normal">
+            <thead className="bg-slate-50 border-b border-slate-200 text-slate-600">
+              <tr>
+                <th className="px-4 py-3 font-semibold w-1/5">Evaluation Pillar</th>
+                <th className="px-4 py-3 font-semibold w-1/12">Weight</th>
+                <th className="px-4 py-3 font-semibold w-1/4">Must-Have Criteria</th>
+                <th className="px-4 py-3 font-semibold w-1/4">Flex / Compromise</th>
+                <th className="px-4 py-3 font-semibold w-1/4">Absolute Dealbreakers</th>
+                {isEditing && <th className="px-4 py-3 font-semibold w-12 text-center">Actions</th>}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {pillars.map((pillar, idx) => (
+                <tr key={idx} className="bg-white">
+                  <td className="px-4 py-4 align-top">
+                    {!isEditing ? (
+                      <span className="font-bold text-slate-900">{pillar.pillar}</span>
+                    ) : (
+                      <input
+                        type="text"
+                        className="w-full text-sm p-2 border border-slate-300 rounded focus:ring-1 focus:ring-blue-500"
+                        value={pillar.pillar}
+                        onChange={(e) => updatePillar(idx, 'pillar', e.target.value)}
+                      />
+                    )}
+                  </td>
+                  <td className="px-4 py-4 align-top">
+                    {!isEditing ? (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-blue-100 text-blue-800">
+                        {pillar.weight}
+                      </span>
+                    ) : (
+                      <input
+                        type="text"
+                        className="w-full text-sm p-2 border border-slate-300 rounded focus:ring-1 focus:ring-blue-500"
+                        value={pillar.weight}
+                        onChange={(e) => updatePillar(idx, 'weight', e.target.value)}
+                      />
+                    )}
+                  </td>
+                  <td className="px-4 py-4 align-top text-emerald-800 font-medium bg-emerald-50/30">
+                    {!isEditing ? (
+                      pillar.mustHaves
+                    ) : (
+                      <textarea
+                        className="w-full text-sm p-2 border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 min-h-[60px]"
+                        value={pillar.mustHaves}
+                        onChange={(e) => updatePillar(idx, 'mustHaves', e.target.value)}
+                      />
+                    )}
+                  </td>
+                  <td className="px-4 py-4 align-top text-amber-800 font-medium bg-amber-50/30">
+                    {!isEditing ? (
+                      pillar.flexZones
+                    ) : (
+                      <textarea
+                        className="w-full text-sm p-2 border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 min-h-[60px]"
+                        value={pillar.flexZones}
+                        onChange={(e) => updatePillar(idx, 'flexZones', e.target.value)}
+                      />
+                    )}
+                  </td>
+                  <td className="px-4 py-4 align-top text-rose-800 font-medium bg-rose-50/30">
+                    {!isEditing ? (
+                      pillar.dealbreakers
+                    ) : (
+                      <textarea
+                        className="w-full text-sm p-2 border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 min-h-[60px]"
+                        value={pillar.dealbreakers}
+                        onChange={(e) => updatePillar(idx, 'dealbreakers', e.target.value)}
+                      />
+                    )}
+                  </td>
+                  {isEditing && (
+                    <td className="px-4 py-4 align-top text-center">
+                      <button
+                        onClick={() => removePillar(idx)}
+                        className="text-slate-400 hover:text-rose-500 p-1"
+                        title="Remove Pillar"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </td>
+                  )}
+                </tr>
               ))}
-            </ul>
-          )}
+              {pillars.length === 0 && !isEditing && (
+                <tr>
+                  <td colSpan={5} className="text-center py-6 text-slate-400 text-sm">
+                    No pillars defined
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
-
-        {/* Pillar 2: Flex Zones (Nice to Haves) */}
-        <div className="bg-blue-50/40 border border-blue-200 rounded-xl p-5 flex flex-col space-y-3.5 shadow-2xs">
-          <div className="flex items-center space-x-2 text-blue-900 font-extrabold text-sm uppercase tracking-wider">
-            <Sliders className="w-5 h-5 text-blue-600" />
-            <span>Flex Zones (Compromises)</span>
-          </div>
-          {isEditing ? (
-            <div className="flex-1 flex flex-col space-y-1.5">
-              <textarea
-                rows={6}
-                value={editedData.flexZones.join('\n')}
-                onChange={(e) => setEditedData({ ...editedData, flexZones: e.target.value.split('\n') })}
-                className="w-full flex-1 p-3 bg-white border border-blue-300 rounded-xl text-xs sm:text-sm text-slate-900 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
-                placeholder="One item per line..."
-              />
-              <span className="text-[11px] text-blue-800/70 font-medium">One item per line</span>
-            </div>
-          ) : (
-            <ul className="space-y-2.5 text-sm text-slate-800 flex-1 font-medium">
-              {editedData.flexZones.map((item, idx) => (
-                <li key={idx} className="flex items-start space-x-2.5 bg-white p-3 rounded-lg border border-blue-100 shadow-2xs">
-                  <span className="text-blue-600 font-bold text-base mt-[-2px]">•</span>
-                  <span className="leading-snug">{item}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        {/* Pillar 3: Dealbreakers (Disqualifiers) */}
-        <div className="bg-rose-50/40 border border-rose-200 rounded-xl p-5 flex flex-col space-y-3.5 shadow-2xs">
-          <div className="flex items-center space-x-2 text-rose-900 font-extrabold text-sm uppercase tracking-wider">
-            <ShieldAlert className="w-5 h-5 text-rose-600" />
-            <span>Dealbreakers (Disqualifiers)</span>
-          </div>
-          {isEditing ? (
-            <div className="flex-1 flex flex-col space-y-1.5">
-              <textarea
-                rows={6}
-                value={editedData.dealbreakers.join('\n')}
-                onChange={(e) => setEditedData({ ...editedData, dealbreakers: e.target.value.split('\n') })}
-                className="w-full flex-1 p-3 bg-white border border-rose-300 rounded-xl text-xs sm:text-sm text-slate-900 font-medium focus:outline-none focus:ring-2 focus:ring-rose-500/20 shadow-2xs"
-                placeholder="One item per line..."
-              />
-              <span className="text-[11px] text-rose-800/70 font-medium">One item per line</span>
-            </div>
-          ) : (
-            <ul className="space-y-2.5 text-sm text-slate-800 flex-1 font-medium">
-              {editedData.dealbreakers.map((item, idx) => (
-                <li key={idx} className="flex items-start space-x-2.5 bg-white p-3 rounded-lg border border-rose-100 shadow-2xs">
-                  <span className="text-rose-600 font-bold mt-0.5">✕</span>
-                  <span className="leading-snug text-rose-950 font-semibold">{item}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+        
+        {isEditing && (
+          <button
+            onClick={addPillar}
+            className="w-full flex items-center justify-center space-x-2 py-2.5 rounded-xl border border-dashed border-slate-300 text-slate-500 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50 transition text-sm font-bold"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add Pillar</span>
+          </button>
+        )}
       </div>
     </div>
   );

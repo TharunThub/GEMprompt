@@ -43,15 +43,7 @@ export function generatePlatformVariants(
   const secondaryGroup = secondaryKeywords.length > 0 ? buildOrGroup(secondaryKeywords) : '';
   const companyGroup = companies.length > 0 ? buildOrGroup(companies) : '';
 
-  // 1. Standard / Generic Boolean
-  const standardParts: string[] = [];
-  if (titleGroup) standardParts.push(titleGroup);
-  if (coreGroup) standardParts.push(coreGroup);
-  if (secondaryGroup) standardParts.push(secondaryGroup);
-  if (companyGroup) standardParts.push(companyGroup);
-  const standard = standardParts.join(' AND ');
-
-  // 2. LinkedIn Recruiter Boolean (optimised for LinkedIn field matching and operators)
+  // 1. LinkedIn Recruiter Boolean (optimised for LinkedIn field matching and operators)
   const liParts: string[] = [];
   if (titleGroup) liParts.push(titleGroup);
   if (coreGroup) liParts.push(coreGroup);
@@ -62,7 +54,7 @@ export function generatePlatformVariants(
   }
   const linkedInRecruiter = liParts.join(' AND ');
 
-  // 3. Naukri Boolean (Naukri Resdex search supports uppercase AND, OR, brackets)
+  // 2. Naukri Boolean (Naukri Resdex search supports uppercase AND, OR, brackets)
   const naukriParts: string[] = [];
   if (titleGroup) naukriParts.push(titleGroup);
   if (coreGroup) naukriParts.push(coreGroup);
@@ -70,7 +62,7 @@ export function generatePlatformVariants(
   if (companyGroup) naukriParts.push(companyGroup);
   const naukri = naukriParts.join(' AND ');
 
-  // 4. Google X-Ray Search for LinkedIn Profiles
+  // 3. Google X-Ray Search for LinkedIn Profiles
   const xrayTitles = titles.slice(0, 4).map(t => `intitle:${quoteTerm(t)}`).join(' OR ');
   const xrayTitleGroup = xrayTitles ? `(${xrayTitles})` : '';
   const xrayLocation = location ? quoteTerm(location) : '';
@@ -86,7 +78,6 @@ export function generatePlatformVariants(
   const googleXray = xrayParts.join(' ');
 
   return {
-    standard,
     linkedInRecruiter,
     naukri,
     googleXray

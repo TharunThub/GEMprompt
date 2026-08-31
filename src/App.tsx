@@ -12,6 +12,7 @@ import { InputPanel } from './components/InputPanel';
 import { PersonaSummaryCard } from './components/PersonaSummaryCard';
 import { BooleanStringsCard } from './components/BooleanStringsCard';
 import { CompanyMappingCard } from './components/CompanyMappingCard';
+import { JobPostingCard } from './components/JobPostingCard';
 import { OutreachStrategyCard } from './components/OutreachStrategyCard';
 import { DayOneChecklistCard } from './components/DayOneChecklistCard';
 import { SettingsModal } from './components/SettingsModal';
@@ -35,14 +36,15 @@ import {
   Building2,
   Mail,
   ListChecks,
-  Layers
+  Layers,
+  FileText
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 const STORAGE_SAVED_PLANS = 'gemprompt_saved_plans_v1';
 const STORAGE_SETTINGS = 'gemprompt_api_settings_v1';
 
-export type ActiveTabType = 'all' | 'persona' | 'boolean' | 'companies' | 'outreach' | 'checklist';
+export type ActiveTabType = 'all' | 'persona' | 'boolean' | 'companies' | 'jobpostings' | 'outreach' | 'checklist';
 
 export function App() {
   // 1. Start on fresh New Intake form by default
@@ -186,9 +188,10 @@ export function App() {
       if (keepEdits && activePlan) {
         finalPlan = {
           ...plan,
-          personaSummary: activePlan.personaSummary,
+          personaScorecard: activePlan.personaScorecard,
           booleanStrings: activePlan.booleanStrings,
           companyMapping: activePlan.companyMapping,
+          jobPostingCopy: activePlan.jobPostingCopy,
           outreachStrategy: activePlan.outreachStrategy,
           dayOneChecklist: activePlan.dayOneChecklist
         };
@@ -466,6 +469,18 @@ export function App() {
                   </button>
 
                   <button
+                    onClick={() => setActiveTab('jobpostings')}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center space-x-2 transition whitespace-nowrap ${
+                      activeTab === 'jobpostings'
+                        ? 'bg-blue-600 text-white shadow-xs'
+                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    }`}
+                  >
+                    <FileText className="w-4 h-4" />
+                    <span>4. Job Postings</span>
+                  </button>
+
+                  <button
                     onClick={() => setActiveTab('outreach')}
                     className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center space-x-2 transition whitespace-nowrap ${
                       activeTab === 'outreach'
@@ -474,7 +489,7 @@ export function App() {
                     }`}
                   >
                     <Mail className="w-4 h-4" />
-                    <span>4. Outreach & InMail</span>
+                    <span>5. Outreach</span>
                   </button>
 
                   <button
@@ -486,7 +501,7 @@ export function App() {
                     }`}
                   >
                     <ListChecks className="w-4 h-4" />
-                    <span>5. Day-1 Checklist</span>
+                    <span>6. Checklist</span>
                   </button>
                 </div>
               </div>
@@ -494,43 +509,49 @@ export function App() {
             </div>
 
             {/* Sourcing Content Cards */}
-            <div className="space-y-8">
-              {(activeTab === 'all' || activeTab === 'persona') && (
-                <PersonaSummaryCard 
-                  summary={activePlan.personaSummary} 
-                  onUpdate={(data) => handleUpdateSection('personaSummary', data)}
-                />
-              )}
+            <div className="space-y-6 mt-6 pb-24">
+                {(activeTab === 'all' || activeTab === 'persona') && (
+                  <PersonaSummaryCard 
+                    scorecard={activePlan.personaScorecard} 
+                    onUpdate={(data) => handleUpdateSection('personaScorecard', data)}
+                  />
+                )}
+                
+                {(activeTab === 'all' || activeTab === 'boolean') && (
+                  <BooleanStringsCard 
+                    booleanStrings={activePlan.booleanStrings} 
+                    onUpdate={(data) => handleUpdateSection('booleanStrings', data)}
+                  />
+                )}
+                
+                {(activeTab === 'all' || activeTab === 'companies') && (
+                  <CompanyMappingCard 
+                    companyMapping={activePlan.companyMapping} 
+                    onUpdate={(data) => handleUpdateSection('companyMapping', data)}
+                  />
+                )}
 
-              {(activeTab === 'all' || activeTab === 'boolean') && (
-                <BooleanStringsCard 
-                  booleanStrings={activePlan.booleanStrings} 
-                  onUpdate={(data) => handleUpdateSection('booleanStrings', data)}
-                />
-              )}
-
-              {(activeTab === 'all' || activeTab === 'companies') && (
-                <CompanyMappingCard 
-                  companyMapping={activePlan.companyMapping} 
-                  onUpdate={(data) => handleUpdateSection('companyMapping', data)}
-                />
-              )}
-
-              {(activeTab === 'all' || activeTab === 'outreach') && (
-                <OutreachStrategyCard 
-                  outreach={activePlan.outreachStrategy} 
-                  onUpdate={(data) => handleUpdateSection('outreachStrategy', data)}
-                />
-              )}
-
-              {(activeTab === 'all' || activeTab === 'checklist') && (
-                <DayOneChecklistCard 
-                  checklist={activePlan.dayOneChecklist} 
-                  onUpdate={(data) => handleUpdateSection('dayOneChecklist', data)}
-                />
-              )}
-            </div>
-
+                {(activeTab === 'all' || activeTab === 'jobpostings') && (
+                  <JobPostingCard 
+                    jobPostingCopy={activePlan.jobPostingCopy} 
+                    onUpdate={(data) => handleUpdateSection('jobPostingCopy', data)}
+                  />
+                )}
+                
+                {(activeTab === 'all' || activeTab === 'outreach') && (
+                  <OutreachStrategyCard 
+                    outreach={activePlan.outreachStrategy} 
+                    onUpdate={(data) => handleUpdateSection('outreachStrategy', data)}
+                  />
+                )}
+                
+                {(activeTab === 'all' || activeTab === 'checklist') && (
+                  <DayOneChecklistCard 
+                    checklist={activePlan.dayOneChecklist} 
+                    onUpdate={(data) => handleUpdateSection('dayOneChecklist', data)}
+                  />
+                )}
+              </div>
           </section>
         )}
 

@@ -27,19 +27,13 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, plan 
 📍 *Location:* ${p.input.location || 'Flexible'} | 💼 *Seniority:* ${p.input.seniority || 'Senior'}
 
 *🎯 TARGET PROFILE:*
-${p.personaSummary.targetProfile}
+${p.personaScorecard.targetProfile}
 
-*✅ NON-NEGOTIABLES:*
-${p.personaSummary.nonNegotiables.map(item => `• ${item}`).join('\n')}
+*📋 EVALUATION PILLARS & SCORECARD:*
+${p.personaScorecard.pillars.map(pillar => `• *${pillar.pillar}* (${pillar.weight})\n  - Must-Haves: ${pillar.mustHaves}\n  - Flex: ${pillar.flexZones}\n  - Dealbreaker: ${pillar.dealbreakers}`).join('\n')}
 
-*🔄 FLEX ZONES:*
-${p.personaSummary.flexZones.map(item => `• ${item}`).join('\n')}
-
-*🚫 DEALBREAKERS:*
-${p.personaSummary.dealbreakers.map(item => `• ${item}`).join('\n')}
-
-*🏢 TARGET COMPANIES TO POACH:*
-${p.companyMapping.targetCompanies.map(c => `• *${c.name}* (${c.category})`).join('\n')}
+*🏢 TARGET COMPANIES & SEGMENTS:*
+${p.companyMapping.segments.map(seg => `• *${seg.segment}:* ${seg.companies.join(', ')} (Designations: ${seg.targetDesignations})`).join('\n')}
 
 *⚡ DAY-1 CHECKLIST:*
 ${p.dayOneChecklist.map((c, i) => `${i + 1}. [${c.category}] ${c.text}`).join('\n')}

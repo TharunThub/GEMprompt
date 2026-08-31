@@ -7,7 +7,7 @@ interface BooleanStringsCardProps {
   onUpdate?: (data: BooleanSearchSection) => void;
 }
 
-type PlatformTab = 'linkedInRecruiter' | 'naukri' | 'googleXray' | 'standard';
+type PlatformTab = 'linkedInRecruiter' | 'naukri' | 'googleXray';
 
 export const BooleanStringsCard: React.FC<BooleanStringsCardProps> = ({ booleanStrings, onUpdate }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -67,6 +67,25 @@ export const BooleanStringsCard: React.FC<BooleanStringsCardProps> = ({ booleanS
     }));
   };
 
+  const handleNaukriFilterChange = (
+    key: keyof BooleanSearchSection['naukriFilters'],
+    value: string
+  ) => {
+    setEditedData(prev => ({
+      ...prev,
+      naukriFilters: {
+        ...(prev.naukriFilters || {
+          experience: '',
+          location: '',
+          noticePeriod: '',
+          salary: '',
+          activePeriod: ''
+        }),
+        [key]: value
+      }
+    }));
+  };
+
   const renderStringBlock = (
     title: string,
     badgeText: string,
@@ -76,7 +95,7 @@ export const BooleanStringsCard: React.FC<BooleanStringsCardProps> = ({ booleanS
     setPlatform: (p: PlatformTab) => void,
     sectionKey: 'broadSearch' | 'targetedSearch' | 'diversitySearch'
   ) => {
-    const activeString = stringData[currentPlatform] || stringData.standard;
+    const activeString = stringData[currentPlatform] || '';
     const isCopied = copiedKey === `${sectionKey}-${currentPlatform}`;
 
     return (
@@ -134,16 +153,6 @@ export const BooleanStringsCard: React.FC<BooleanStringsCardProps> = ({ booleanS
               }`}
             >
               Google X-Ray
-            </button>
-            <button
-              onClick={() => setPlatform('standard')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-md transition cursor-pointer ${
-                currentPlatform === 'standard'
-                  ? 'bg-slate-700 text-white shadow-2xs'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-              }`}
-            >
-              Standard
             </button>
           </div>
         </div>
@@ -286,6 +295,94 @@ export const BooleanStringsCard: React.FC<BooleanStringsCardProps> = ({ booleanS
           platform3,
           setPlatform3,
           'diversitySearch'
+        )}
+      </div>
+
+      {/* Naukri Resdex Platform Filters */}
+      <div className="bg-amber-50/40 border border-amber-200/80 rounded-xl p-5 space-y-3.5 shadow-2xs">
+        <div className="flex items-center space-x-2.5">
+          <span className="text-xs font-bold px-2.5 py-0.5 rounded-md bg-amber-100 text-amber-800 border border-amber-200 shadow-2xs">
+            Naukri Filters
+          </span>
+          <h4 className="text-base font-bold text-slate-900">Resdex Search & Sourcing Filters</h4>
+        </div>
+
+        {!isEditing ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-1">
+            <div className="bg-white border border-slate-200 rounded-lg p-3 shadow-2xs space-y-1">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Experience</span>
+              <p className="text-xs font-semibold text-slate-800">{editedData.naukriFilters?.experience || 'N/A'}</p>
+            </div>
+            <div className="bg-white border border-slate-200 rounded-lg p-3 shadow-2xs space-y-1">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Location Hubs</span>
+              <p className="text-xs font-semibold text-slate-800">{editedData.naukriFilters?.location || 'N/A'}</p>
+            </div>
+            <div className="bg-white border border-slate-200 rounded-lg p-3 shadow-2xs space-y-1">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Notice Period</span>
+              <p className="text-xs font-semibold text-slate-800">{editedData.naukriFilters?.noticePeriod || 'N/A'}</p>
+            </div>
+            <div className="bg-white border border-slate-200 rounded-lg p-3 shadow-2xs space-y-1">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Salary / CTC Band</span>
+              <p className="text-xs font-semibold text-slate-800">{editedData.naukriFilters?.salary || 'N/A'}</p>
+            </div>
+            <div className="bg-white border border-slate-200 rounded-lg p-3 shadow-2xs space-y-1 sm:col-span-2 lg:col-span-2">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Candidate Activity</span>
+              <p className="text-xs font-semibold text-slate-800">{editedData.naukriFilters?.activePeriod || 'N/A'}</p>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-1">
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Experience</label>
+              <input
+                type="text"
+                value={editedData.naukriFilters?.experience || ''}
+                onChange={(e) => handleNaukriFilterChange('experience', e.target.value)}
+                placeholder="e.g. 5-8 Years"
+                className="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-amber-500/20 shadow-2xs"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Location Hubs</label>
+              <input
+                type="text"
+                value={editedData.naukriFilters?.location || ''}
+                onChange={(e) => handleNaukriFilterChange('location', e.target.value)}
+                placeholder="e.g. Bengaluru, Hyderabad"
+                className="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-amber-500/20 shadow-2xs"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Notice Period</label>
+              <input
+                type="text"
+                value={editedData.naukriFilters?.noticePeriod || ''}
+                onChange={(e) => handleNaukriFilterChange('noticePeriod', e.target.value)}
+                placeholder="e.g. 0-30 Days / Serving"
+                className="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-amber-500/20 shadow-2xs"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Salary / CTC Band</label>
+              <input
+                type="text"
+                value={editedData.naukriFilters?.salary || ''}
+                onChange={(e) => handleNaukriFilterChange('salary', e.target.value)}
+                placeholder="e.g. 35-50 LPA"
+                className="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-amber-500/20 shadow-2xs"
+              />
+            </div>
+            <div className="space-y-1 sm:col-span-2 lg:col-span-2">
+              <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Candidate Activity</label>
+              <input
+                type="text"
+                value={editedData.naukriFilters?.activePeriod || ''}
+                onChange={(e) => handleNaukriFilterChange('activePeriod', e.target.value)}
+                placeholder="e.g. Active in last 30 days"
+                className="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-amber-500/20 shadow-2xs"
+              />
+            </div>
+          </div>
         )}
       </div>
     </div>

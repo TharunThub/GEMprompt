@@ -1,9 +1,10 @@
 import {
   RequisitionInput,
   SourcingActionPlan,
-  PersonaSummary,
+  PersonaScorecard,
   BooleanSearchSection,
-  CompanyMapping,
+  CompanyMappingMatrix,
+  JobPostingCopy,
   OutreachStrategy,
   ChecklistItem
 } from '../types/sourcing';
@@ -26,77 +27,167 @@ export function extractSourcingStrategyLocally(input: RequisitionInput): Sourcin
   const coreSkills = detectedSkills.slice(0, 4);
   const secondarySkills = detectedSkills.slice(4, 9);
   const adjacentSkills = extractAdjacentSkills(detectedSkills, roleName);
+  const yearsExp = extractYearsOfExp(combinedText) || '4-8+';
 
-  // Extract Companies
+  // Extract Companies & Exclusions
   const companiesFromNotes = extractCompanies(input.intakeNotes + '\n' + input.jobDescription);
   const targetCompanies = companiesFromNotes.targets.length > 0 ? companiesFromNotes.targets : generateFallbackCompanies(roleName, detectedSkills);
-  const exclusions = companiesFromNotes.exclusions.length > 0 ? companiesFromNotes.exclusions : [
-    { name: 'Direct Competitors under active Non-Solicit / Investor Portfolio', reason: 'Explicit legal non-poach policy' },
-    { name: 'Low-scale IT Services / Outsourced bodyshop vendors', reason: 'HM explicitly requested product engineering / high-scale environment' }
-  ];
+  const customExclusions = companiesFromNotes.exclusions.length > 0
+    ? companiesFromNotes.exclusions.map(e => `${e.name} (${e.reason})`).join('; ')
+    : 'Direct competitor non-solicit / sister portfolio companies under active pacts';
 
-  // 1. Core Persona & Key Criteria Summary
-  const personaSummary: PersonaSummary = {
+  // 1. Core Persona & Evaluation Scorecard
+  const customIntakeAnalysis = parseCustomIntakeNotes(input.intakeNotes);
+
+  const mustHavesPillar1 = customIntakeAnalysis.mustHaves.length > 0
+    ? customIntakeAnalysis.mustHaves.join('; ')
+    : `At least ${yearsExp} years hands-on experience in ${coreSkills[0] || 'core engineering'} & ${coreSkills[1] || 'distributed architecture'}. Production track record in ${coreSkills.slice(0, 3).join(', ')}.`;
+
+  const flexZonesPillar1 = customIntakeAnalysis.flexZones.length > 0
+    ? customIntakeAnalysis.flexZones.join('; ')
+    : `Strong fundamentals in adjacent stacks (${adjacentSkills.slice(0, 2).join(', ') || 'modern frameworks'}) acceptable with demonstrated fast ramp-up.`;
+
+  const dealbreakersPillar1 = customIntakeAnalysis.dealbreakers.length > 0
+    ? customIntakeAnalysis.dealbreakers.join('; ')
+    : `Pure theoretical/academic experience without verifiable production scale; lacking hands-on implementation depth.`;
+
+  const personaScorecard: PersonaScorecard = {
     targetProfile: `${seniority} ${roleName} with proven track record in ${coreSkills.slice(0, 3).join(', ')}${input.location ? ` in ${input.location}` : ''}. Proven hands-on capability in architecting and delivering high-impact solutions in high-scale environments.`,
-    nonNegotiables: [
-      `At least ${extractYearsOfExp(combinedText) || '4-6+'} years hands-on experience in ${coreSkills[0] || 'core domain'} and ${coreSkills[1] || 'production systems'}.`,
-      `Demonstrated production track record handling ${coreSkills.slice(0, 3).join(' / ')}.`,
-      `Deep expertise in system architecture, performance optimization, and industry standard tooling.`,
-      `Demonstrated problem solving and ability to navigate fast-paced product environments without constant oversight.`
-    ],
-    flexZones: [
-      `Years of experience (YOE) can be relaxed for top-tier performers with proven pedigree or high-growth company experience.`,
-      `Domain flexibility: Strong foundational skills in adjacent stacks or architectures acceptable with demonstrated ramp-up capability.`,
-      `Degree/Pedigree: Tier-1 academic background is preferred but hands-on product achievements, open-source impact, or top-tier portfolios easily override pedigree.`
-    ],
-    dealbreakers: [
-      `Pure academic/theoretical experience without verifiable production scale deployments.`,
-      `Excessive short job tenures (frequent hopping under 10-12 months without clear rationale).`,
-      `Candidates lacking hands-on coding/technical execution experience (e.g. exclusively managing vendors/outsourced teams).`
+    pillars: [
+      {
+        pillar: 'Domain / Technical Depth',
+        weight: '30%',
+        mustHaves: mustHavesPillar1,
+        flexZones: flexZonesPillar1,
+        dealbreakers: dealbreakersPillar1
+      },
+      {
+        pillar: 'System Architecture & Scale',
+        weight: '20%',
+        mustHaves: `Proven track record with high-throughput distributed systems, microservices, and concurrency optimization.`,
+        flexZones: `YOE can be relaxed for top-tier performers with demonstrable high-scale product impact.`,
+        dealbreakers: `Experience limited to low-scale CRUD apps or purely managing outsourced vendors.`
+      },
+      {
+        pillar: 'Pedigree / Education / Craft',
+        weight: '15%',
+        mustHaves: `B.Tech/M.Tech in Computer Science or equivalent practical engineering achievements.`,
+        flexZones: `Tier-1 pedigree preferred but stellar GitHub / open-source contributions easily override university background.`,
+        dealbreakers: `Inability to clear hands-on live architecture and problem-solving evaluation.`
+      },
+      {
+        pillar: 'Location & Notice Period',
+        weight: '15%',
+        mustHaves: `${input.location ? `${input.location} (${input.workModel || 'Hybrid'})` : 'Flexible / Hybrid'}; Max 30-45 days notice period preferred.`,
+        flexZones: `Buyout options available for immediate/exceptional joiners.`,
+        dealbreakers: `Notice period > 60-90 days with zero buyout flexibility; unwilling to adhere to work model.`
+      },
+      {
+        pillar: 'Compensation / Band Fit',
+        weight: '20%',
+        mustHaves: `Market competitive compensation aligned with ${seniority} ${roleName} band.`,
+        flexZones: `Compensation flexibility available for top 5% talent with critical domain expertise.`,
+        dealbreakers: `CTC expectations exceeding budgeted ceiling by > 20% without prior HM approval.`
+      }
     ]
   };
 
-  // Check if intake notes contain explicit dealbreakers or flex items
-  const customIntakeAnalysis = parseCustomIntakeNotes(input.intakeNotes);
-  if (customIntakeAnalysis.mustHaves.length > 0) personaSummary.nonNegotiables = customIntakeAnalysis.mustHaves;
-  if (customIntakeAnalysis.flexZones.length > 0) personaSummary.flexZones = customIntakeAnalysis.flexZones;
-  if (customIntakeAnalysis.dealbreakers.length > 0) personaSummary.dealbreakers = customIntakeAnalysis.dealbreakers;
-
-  // 2. Boolean Search Strings
+  // 2. Boolean Search Strings & Platform Filters
   const primaryTitles = generateRelatedTitles(roleName, seniority);
   const broadTitles = [roleName, ...primaryTitles.slice(0, 3)];
   const nicheTitles = primaryTitles.slice(0, 2);
   const diversityTitles = generateAlternativeTitles(roleName);
 
+  const broadVariants = generatePlatformVariants(broadTitles, coreSkills.slice(0, 2), [], [], input.location);
   const broadSearch = {
     description: 'Captures standard job titles and core foundational skills across target geographies.',
-    ...generatePlatformVariants(broadTitles, coreSkills.slice(0, 2), [], [], input.location)
+    linkedInRecruiter: broadVariants.linkedInRecruiter,
+    naukri: broadVariants.naukri,
+    googleXray: broadVariants.googleXray
   };
 
   const targetCompanyNames = targetCompanies.map(c => c.name);
+  const targetedVariants = generatePlatformVariants(nicheTitles, coreSkills, secondarySkills.slice(0, 2), targetCompanyNames.slice(0, 5), input.location);
   const targetedSearch = {
     description: 'Highly focused on specific frameworks, deep tech keywords, and candidate poaching pools.',
-    ...generatePlatformVariants(nicheTitles, coreSkills, secondarySkills.slice(0, 2), targetCompanyNames.slice(0, 5), input.location)
+    linkedInRecruiter: targetedVariants.linkedInRecruiter,
+    naukri: targetedVariants.naukri,
+    googleXray: targetedVariants.googleXray
   };
 
+  const diversityVariants = generatePlatformVariants(diversityTitles, adjacentSkills, secondarySkills.slice(0, 2), [], input.location);
   const diversitySearch = {
     description: 'Explores non-traditional titles, adjacent industry domains, and parallel skill backgrounds.',
-    ...generatePlatformVariants(diversityTitles, adjacentSkills, secondarySkills.slice(0, 2), [], input.location)
+    linkedInRecruiter: diversityVariants.linkedInRecruiter,
+    naukri: diversityVariants.naukri,
+    googleXray: diversityVariants.googleXray
   };
 
   const booleanStrings: BooleanSearchSection = {
     broadSearch,
     targetedSearch,
-    diversitySearch
+    diversitySearch,
+    naukriFilters: {
+      experience: `${yearsExp} Years`,
+      location: input.location || 'Bengaluru, Hyderabad, Pune, Delhi NCR, Mumbai',
+      noticePeriod: '0-30 Days / Serving Notice Period',
+      salary: 'Target Market Band / Competitive LPA',
+      activePeriod: 'Active in last 30 days'
+    }
   };
 
-  // 3. Target Company Mapping
-  const companyMapping: CompanyMapping = {
-    targetCompanies,
-    exclusions
+  // 3. Target Company Mapping Matrix
+  const tier1Companies = targetCompanies.slice(0, 5).map(c => c.name);
+  const tier2Companies = targetCompanies.slice(5).map(c => c.name);
+  const fallbackTier2 = ['Uber', 'Stripe', 'Atlassian', 'Datadog', 'Snowflake', 'Grab'];
+  const fallbackTier3 = ['Zepto', 'Groww', 'Postman', 'BrowserStack', 'Zomato', 'InMobi'];
+
+  const companyMapping: CompanyMappingMatrix = {
+    segments: [
+      {
+        segment: 'Tier 1: Direct Competitors & High-Scale Product Leaders',
+        companies: tier1Companies.length > 0 ? tier1Companies : ['Razorpay', 'Swiggy', 'CRED', 'Flipkart', 'PhonePe', 'Juspay'],
+        businessUnits: 'Core Platform Engineering / High-Throughput Microservices / Distributed Systems GCCs',
+        targetDesignations: `${seniority} ${roleName}, Lead Engineer, Member of Technical Staff`,
+        exclusions: customExclusions
+      },
+      {
+        segment: 'Tier 2: Adjacent Tech Sectors & Global Capability Centers (GCCs)',
+        companies: tier2Companies.length > 0 ? tier2Companies : fallbackTier2,
+        businessUnits: 'Enterprise Cloud Architecture / High-Scale Data Infrastructure / Platform Pods',
+        targetDesignations: `Senior Software Engineer, Tech Lead, Staff Software Engineer`,
+        exclusions: 'Low-scale IT consulting services / bodyshop vendors'
+      },
+      {
+        segment: 'Tier 3: High-Growth Product Startups & Scaled Scaleups',
+        companies: fallbackTier3,
+        businessUnits: 'Fast-paced Core Product & Infrastructure Engineering',
+        targetDesignations: `SDE-2, SDE-3, Senior Platform Engineer`,
+        exclusions: 'Early-stage stealth startups with high retention lock-in'
+      }
+    ]
   };
 
-  // 4. Candidate Outreach & Messaging Strategy
+  // 4. Job Posting Copy
+  const jobPostingCopy: JobPostingCopy = {
+    naukri: {
+      headline: `Hiring ${seniority} ${roleName} - ${coreSkills.slice(0, 3).join(' / ')} | ${input.location || 'Bengaluru / Hybrid'}`,
+      keyTags: Array.from(new Set([...coreSkills, ...secondarySkills.slice(0, 3), roleName, 'Microservices', 'Distributed Systems', 'Cloud Architecture'])).slice(0, 8),
+      summary: `Exciting opportunity for a ${seniority} ${roleName} with hands-on expertise in ${coreSkills.slice(0, 3).join(', ')}. Join a high-velocity engineering team architecting resilient, high-throughput systems at scale. Excellent compensation and growth opportunities (${input.location ? `${input.location} - ` : ''}${input.workModel || 'Hybrid'}).`
+    },
+    linkedIn: {
+      hook: `🚀 We are actively seeking a talented ${seniority} ${roleName} to join our team! If you thrive on solving complex engineering challenges and architecting scalable systems using ${coreSkills.slice(0, 2).join(' and ')}, let's talk.`,
+      responsibilitiesAndRequirements: [
+        `Architect, develop, and scale resilient microservices and distributed systems with sub-millisecond latencies.`,
+        `Hands-on implementation leveraging ${coreSkills.slice(0, 3).join(', ')} in modern cloud environments.`,
+        `Drive technical design reviews, mentor team members, and maintain high standards of code craft.`,
+        `Proven experience (${yearsExp} years) building high-scale production services in fast-paced product environments.`,
+        `Strong foundation in data structures, algorithms, and concurrency primitives.`
+      ]
+    }
+  };
+
+  // 5. Candidate Outreach & Messaging Strategy
   const valueProposition = [
     `High-impact engineering scale & autonomy: Direct ownership of critical high-throughput infrastructure.`,
     `Modern, developer-first culture with top-of-market compensation and flexible working arrangements.`
@@ -123,7 +214,7 @@ Best regards,
     inMailTemplate
   };
 
-  // 5. Day-1 Immediate Checklist
+  // 6. Day-1 Immediate Checklist
   const dayOneChecklist: ChecklistItem[] = [
     {
       id: 'step-1',
@@ -139,19 +230,25 @@ Best regards,
     },
     {
       id: 'step-3',
+      text: `Apply Naukri Resdex filters (${booleanStrings.naukriFilters.experience}, notice period: ${booleanStrings.naukriFilters.noticePeriod}) and export top active candidate matches.`,
+      category: 'Sourcing',
+      completed: false
+    },
+    {
+      id: 'step-4',
       text: `Personalize and dispatch the first batch of 15-20 targeted InMails using the Hook & Value Proposition template.`,
       category: 'Outreach',
       completed: false
     },
     {
-      id: 'step-4',
+      id: 'step-5',
       text: `Cross-reference target company mapping to identify second-degree connection referrals from existing engineering team.`,
       category: 'Pipeline',
       completed: false
     },
     {
-      id: 'step-5',
-      text: `Sync with Hiring Manager with first 5 calibration profiles to align on calibration feedback before full-throttle outreach.`,
+      id: 'step-6',
+      text: `Sync with Hiring Manager with first 5 calibration profiles to align on scorecard pillars before full-throttle outreach.`,
       category: 'Sync',
       completed: false
     }
@@ -161,9 +258,10 @@ Best regards,
     id: `req-${Date.now()}`,
     createdAt: new Date().toISOString(),
     input,
-    personaSummary,
+    personaScorecard,
     booleanStrings,
     companyMapping,
+    jobPostingCopy,
     outreachStrategy,
     dayOneChecklist
   };

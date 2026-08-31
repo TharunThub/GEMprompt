@@ -93,7 +93,7 @@ export const SavedRequisitionsModal: React.FC<SavedRequisitionsModalProps> = ({
                       <span>{new Date(plan.createdAt).toLocaleDateString()}</span>
                     </span>
                     <span className="px-2 py-0.2 rounded bg-white text-slate-600 border border-slate-200 font-mono text-[10px]">
-                      {plan.companyMapping.targetCompanies.length} Target Co.
+                      {plan.companyMapping.segments[0]?.companies?.length || 0} Target Co.
                     </span>
                   </div>
                 </div>

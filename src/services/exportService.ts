@@ -6,7 +6,15 @@ import { SourcingActionPlan } from '../types/sourcing';
  * Formats the entire Sourcing Action Plan into clean, human-readable Markdown
  */
 export function formatPlanAsMarkdown(plan: SourcingActionPlan): string {
-  const { input, personaSummary, booleanStrings, companyMapping, outreachStrategy, dayOneChecklist } = plan;
+  const {
+    input,
+    personaScorecard,
+    booleanStrings,
+    companyMapping,
+    jobPostingCopy,
+    outreachStrategy,
+    dayOneChecklist
+  } = plan;
 
   return `# SOURCING ACTION PLAN: ${input.title.toUpperCase()}
 **Target Location**: ${input.location || 'Flexible'} | **Seniority**: ${input.seniority || 'Mid-Senior'} | **Work Model**: ${input.workModel || 'Flexible'}
@@ -14,63 +22,122 @@ export function formatPlanAsMarkdown(plan: SourcingActionPlan): string {
 
 ---
 
-## 1. CORE PERSONA & KEY CRITERIA SUMMARY
+## 1. CORE PERSONA & EVALUATION SCORECARD
 
-### Target Profile
-${personaSummary.targetProfile}
+### Target Profile Narrative
+${personaScorecard.targetProfile}
 
-### Non-Negotiables (Must-Haves)
-${personaSummary.nonNegotiables.map(item => `- **${item}**`).join('\n')}
-
-### Flex Zones (Nice-to-Haves)
-${personaSummary.flexZones.map(item => `- ${item}`).join('\n')}
-
-### Dealbreakers & Disqualifiers
-${personaSummary.dealbreakers.map(item => `- ❌ ${item}`).join('\n')}
+### 5-Pillar Scorecard Matrix
+| Evaluation Pillar | Weight | Must-Have Criteria | Flex / Compromise | Absolute Dealbreakers |
+| :--- | :--- | :--- | :--- | :--- |
+${personaScorecard.pillars.map(p => `| **${p.pillar}** | ${p.weight} | ${p.mustHaves.replace(/\|/g, '\\|')} | ${p.flexZones.replace(/\|/g, '\\|')} | ${p.dealbreakers.replace(/\|/g, '\\|')} |`).join('\n')}
 
 ---
 
-## 2. BOOLEAN SEARCH STRINGS
+## 2. BOOLEAN SEARCH STRINGS & PLATFORM FILTERS
 
-### Broad Search
+### String 1: Broad / Standard Search
+*${booleanStrings.broadSearch.description}*
+
 **LinkedIn Recruiter:**
+\`\`\`
 ${booleanStrings.broadSearch.linkedInRecruiter}
+\`\`\`
 
 **Naukri:**
+\`\`\`
 ${booleanStrings.broadSearch.naukri}
+\`\`\`
 
-### Targeted Search
+**Google X-Ray:**
+\`\`\`
+${booleanStrings.broadSearch.googleXray}
+\`\`\`
+
+### String 2: Targeted / Niche Search
+*${booleanStrings.targetedSearch.description}*
+
 **LinkedIn Recruiter:**
+\`\`\`
 ${booleanStrings.targetedSearch.linkedInRecruiter}
+\`\`\`
 
 **Naukri:**
+\`\`\`
 ${booleanStrings.targetedSearch.naukri}
+\`\`\`
+
+**Google X-Ray:**
+\`\`\`
+${booleanStrings.targetedSearch.googleXray}
+\`\`\`
+
+### String 3: Diversity / Out-of-the-Box Search
+*${booleanStrings.diversitySearch.description}*
+
+**LinkedIn Recruiter:**
+\`\`\`
+${booleanStrings.diversitySearch.linkedInRecruiter}
+\`\`\`
+
+**Naukri:**
+\`\`\`
+${booleanStrings.diversitySearch.naukri}
+\`\`\`
+
+**Google X-Ray:**
+\`\`\`
+${booleanStrings.diversitySearch.googleXray}
+\`\`\`
+
+### Naukri Platform Filters
+- **Experience:** ${booleanStrings.naukriFilters.experience}
+- **Location:** ${booleanStrings.naukriFilters.location}
+- **Notice Period:** ${booleanStrings.naukriFilters.noticePeriod}
+- **Salary / CTC:** ${booleanStrings.naukriFilters.salary}
+- **Candidate Activity:** ${booleanStrings.naukriFilters.activePeriod}
 
 ---
 
 ## 3. TARGET COMPANY MAPPING
 
-### Target Companies
-${companyMapping.targetCompanies.map(c => `- **${c.name}** (${c.category}): ${c.rationale}`).join('\n')}
-
-### Exclusions & Off-Limits
-${companyMapping.exclusions.map(e => `- ⚠️ **${e.name}**: ${e.reason}`).join('\n')}
+### Company Segmentation Matrix
+| Target Segment | Target Companies | Target Business Units | Target Designations | Segment Exclusions |
+| :--- | :--- | :--- | :--- | :--- |
+${companyMapping.segments.map(s => `| **${s.segment}** | ${s.companies.join(', ')} | ${s.businessUnits.replace(/\|/g, '\\|')} | ${s.targetDesignations.replace(/\|/g, '\\|')} | ${s.exclusions.replace(/\|/g, '\\|')} |`).join('\n')}
 
 ---
 
-## 4. OUTREACH STRATEGY
+## 4. JOB POSTING COPY
 
-### Value Proposition
-${outreachStrategy.valueProposition.map(vp => `1. **${vp}**`).join('\n')}
+### Naukri Job Posting
+- **Headline:** ${jobPostingCopy.naukri.headline}
+- **Key Tags / Skills:** ${jobPostingCopy.naukri.keyTags.join(', ')}
+- **Summary:**
+${jobPostingCopy.naukri.summary}
 
-### InMail Template
+### LinkedIn Job Posting
+- **Hook:**
+${jobPostingCopy.linkedIn.hook}
+
+- **Key Responsibilities & Requirements:**
+${jobPostingCopy.linkedIn.responsibilitiesAndRequirements.map(req => `- ${req}`).join('\n')}
+
+---
+
+## 5. OUTREACH STRATEGY & INMAIL
+
+### Value Proposition Selling Hooks
+${outreachStrategy.valueProposition.map((vp, i) => `${i + 1}. **${vp}**`).join('\n')}
+
+### Cold Outreach InMail Template
 **Subject:** ${outreachStrategy.inMailTemplate.subject}
 
 ${outreachStrategy.inMailTemplate.body}
 
 ---
 
-## 5. DAY-1 IMMEDIATE CHECKLIST
+## 6. DAY-1 IMMEDIATE CHECKLIST
 ${dayOneChecklist.map((c, i) => `${i + 1}. [ ] **[${c.category}]** ${c.text}`).join('\n')}
 `;
 }
@@ -96,7 +163,7 @@ export function downloadMarkdownFile(plan: SourcingActionPlan) {
  */
 export function downloadPDFFile(plan: SourcingActionPlan) {
   const doc = new jsPDF();
-  const textLines = doc.splitTextToSize(formatPlanAsMarkdown(plan).replace(/\*\*/g, ''), 180);
+  const textLines = doc.splitTextToSize(formatPlanAsMarkdown(plan).replace(/\*\*/g, '').replace(/```/g, ''), 180);
   doc.setFontSize(10);
   let y = 10;
   textLines.forEach((line: string) => {
@@ -114,22 +181,193 @@ export function downloadPDFFile(plan: SourcingActionPlan) {
  * Download as DOCX
  */
 export async function downloadDOCXFile(plan: SourcingActionPlan) {
-  const md = formatPlanAsMarkdown(plan).replace(/\*\*/g, '');
-  const lines = md.split('\n');
-  
-  const paragraphs = lines.map(line => {
-    if (line.startsWith('# ')) {
-      return new Paragraph({ text: line.replace('# ', ''), heading: HeadingLevel.HEADING_1 });
-    } else if (line.startsWith('## ')) {
-      return new Paragraph({ text: line.replace('## ', ''), heading: HeadingLevel.HEADING_2 });
-    } else if (line.startsWith('### ')) {
-      return new Paragraph({ text: line.replace('### ', ''), heading: HeadingLevel.HEADING_3 });
-    } else if (line.trim() === '---') {
-      return new Paragraph({ text: '--------------------------------------------------' });
-    } else {
-      return new Paragraph({ children: [new TextRun(line)] });
-    }
-  });
+  const {
+    input,
+    personaScorecard,
+    booleanStrings,
+    companyMapping,
+    jobPostingCopy,
+    outreachStrategy,
+    dayOneChecklist
+  } = plan;
+
+  const paragraphs: Paragraph[] = [
+    new Paragraph({
+      text: `SOURCING ACTION PLAN: ${input.title.toUpperCase()}`,
+      heading: HeadingLevel.HEADING_1
+    }),
+    new Paragraph({
+      children: [
+        new TextRun({ text: `Target Location: ${input.location || 'Flexible'} | `, bold: true }),
+        new TextRun({ text: `Seniority: ${input.seniority || 'Mid-Senior'} | `, bold: true }),
+        new TextRun({ text: `Work Model: ${input.workModel || 'Flexible'} | `, bold: true }),
+        new TextRun({ text: `Generated On: ${new Date(plan.createdAt).toLocaleDateString()}`, bold: true })
+      ]
+    }),
+    new Paragraph({ text: '--------------------------------------------------' }),
+
+    // 1. Persona Scorecard
+    new Paragraph({
+      text: '1. CORE PERSONA & EVALUATION SCORECARD',
+      heading: HeadingLevel.HEADING_2
+    }),
+    new Paragraph({
+      text: 'Target Profile Narrative',
+      heading: HeadingLevel.HEADING_3
+    }),
+    new Paragraph({
+      children: [new TextRun(personaScorecard.targetProfile)]
+    }),
+    new Paragraph({
+      text: '5-Pillar Scorecard Matrix',
+      heading: HeadingLevel.HEADING_3
+    }),
+    ...personaScorecard.pillars.flatMap(p => [
+      new Paragraph({
+        children: [
+          new TextRun({ text: `• ${p.pillar} `, bold: true }),
+          new TextRun(`(Weight: ${p.weight})`)
+        ]
+      }),
+      new Paragraph({
+        children: [
+          new TextRun({ text: '   - Must-Haves: ', bold: true }),
+          new TextRun(p.mustHaves)
+        ]
+      }),
+      new Paragraph({
+        children: [
+          new TextRun({ text: '   - Flex Zones: ', bold: true }),
+          new TextRun(p.flexZones)
+        ]
+      }),
+      new Paragraph({
+        children: [
+          new TextRun({ text: '   - Dealbreakers: ', bold: true }),
+          new TextRun(p.dealbreakers)
+        ]
+      })
+    ]),
+    new Paragraph({ text: '--------------------------------------------------' }),
+
+    // 2. Boolean Search Strings & Platform Filters
+    new Paragraph({
+      text: '2. BOOLEAN SEARCH STRINGS & PLATFORM FILTERS',
+      heading: HeadingLevel.HEADING_2
+    }),
+    new Paragraph({
+      text: 'String 1: Broad / Standard Search',
+      heading: HeadingLevel.HEADING_3
+    }),
+    new Paragraph({ children: [new TextRun({ text: booleanStrings.broadSearch.description, italics: true })] }),
+    new Paragraph({ children: [new TextRun({ text: 'LinkedIn Recruiter: ', bold: true }), new TextRun(booleanStrings.broadSearch.linkedInRecruiter)] }),
+    new Paragraph({ children: [new TextRun({ text: 'Naukri: ', bold: true }), new TextRun(booleanStrings.broadSearch.naukri)] }),
+    new Paragraph({ children: [new TextRun({ text: 'Google X-Ray: ', bold: true }), new TextRun(booleanStrings.broadSearch.googleXray)] }),
+
+    new Paragraph({
+      text: 'String 2: Targeted / Niche Search',
+      heading: HeadingLevel.HEADING_3
+    }),
+    new Paragraph({ children: [new TextRun({ text: booleanStrings.targetedSearch.description, italics: true })] }),
+    new Paragraph({ children: [new TextRun({ text: 'LinkedIn Recruiter: ', bold: true }), new TextRun(booleanStrings.targetedSearch.linkedInRecruiter)] }),
+    new Paragraph({ children: [new TextRun({ text: 'Naukri: ', bold: true }), new TextRun(booleanStrings.targetedSearch.naukri)] }),
+    new Paragraph({ children: [new TextRun({ text: 'Google X-Ray: ', bold: true }), new TextRun(booleanStrings.targetedSearch.googleXray)] }),
+
+    new Paragraph({
+      text: 'String 3: Diversity / Out-of-the-Box Search',
+      heading: HeadingLevel.HEADING_3
+    }),
+    new Paragraph({ children: [new TextRun({ text: booleanStrings.diversitySearch.description, italics: true })] }),
+    new Paragraph({ children: [new TextRun({ text: 'LinkedIn Recruiter: ', bold: true }), new TextRun(booleanStrings.diversitySearch.linkedInRecruiter)] }),
+    new Paragraph({ children: [new TextRun({ text: 'Naukri: ', bold: true }), new TextRun(booleanStrings.diversitySearch.naukri)] }),
+    new Paragraph({ children: [new TextRun({ text: 'Google X-Ray: ', bold: true }), new TextRun(booleanStrings.diversitySearch.googleXray)] }),
+
+    new Paragraph({
+      text: 'Naukri Platform Filters',
+      heading: HeadingLevel.HEADING_3
+    }),
+    new Paragraph({ children: [new TextRun({ text: '• Experience: ', bold: true }), new TextRun(booleanStrings.naukriFilters.experience)] }),
+    new Paragraph({ children: [new TextRun({ text: '• Location: ', bold: true }), new TextRun(booleanStrings.naukriFilters.location)] }),
+    new Paragraph({ children: [new TextRun({ text: '• Notice Period: ', bold: true }), new TextRun(booleanStrings.naukriFilters.noticePeriod)] }),
+    new Paragraph({ children: [new TextRun({ text: '• Salary / CTC: ', bold: true }), new TextRun(booleanStrings.naukriFilters.salary)] }),
+    new Paragraph({ children: [new TextRun({ text: '• Candidate Activity: ', bold: true }), new TextRun(booleanStrings.naukriFilters.activePeriod)] }),
+    new Paragraph({ text: '--------------------------------------------------' }),
+
+    // 3. Target Company Mapping
+    new Paragraph({
+      text: '3. TARGET COMPANY MAPPING',
+      heading: HeadingLevel.HEADING_2
+    }),
+    ...companyMapping.segments.flatMap(s => [
+      new Paragraph({
+        text: s.segment,
+        heading: HeadingLevel.HEADING_3
+      }),
+      new Paragraph({ children: [new TextRun({ text: '• Target Companies: ', bold: true }), new TextRun(s.companies.join(', '))] }),
+      new Paragraph({ children: [new TextRun({ text: '• Business Units: ', bold: true }), new TextRun(s.businessUnits)] }),
+      new Paragraph({ children: [new TextRun({ text: '• Target Designations: ', bold: true }), new TextRun(s.targetDesignations)] }),
+      new Paragraph({ children: [new TextRun({ text: '• Exclusions: ', bold: true }), new TextRun(s.exclusions)] })
+    ]),
+    new Paragraph({ text: '--------------------------------------------------' }),
+
+    // 4. Job Posting Copy
+    new Paragraph({
+      text: '4. JOB POSTING COPY',
+      heading: HeadingLevel.HEADING_2
+    }),
+    new Paragraph({
+      text: 'Naukri Job Posting',
+      heading: HeadingLevel.HEADING_3
+    }),
+    new Paragraph({ children: [new TextRun({ text: 'Headline: ', bold: true }), new TextRun(jobPostingCopy.naukri.headline)] }),
+    new Paragraph({ children: [new TextRun({ text: 'Key Tags: ', bold: true }), new TextRun(jobPostingCopy.naukri.keyTags.join(', '))] }),
+    new Paragraph({ children: [new TextRun({ text: 'Summary: ', bold: true }), new TextRun(jobPostingCopy.naukri.summary)] }),
+
+    new Paragraph({
+      text: 'LinkedIn Job Posting',
+      heading: HeadingLevel.HEADING_3
+    }),
+    new Paragraph({ children: [new TextRun({ text: 'Hook: ', bold: true }), new TextRun(jobPostingCopy.linkedIn.hook)] }),
+    new Paragraph({ children: [new TextRun({ text: 'Key Responsibilities & Requirements:', bold: true })] }),
+    ...jobPostingCopy.linkedIn.responsibilitiesAndRequirements.map(req =>
+      new Paragraph({ children: [new TextRun({ text: '• ' }), new TextRun(req)] })
+    ),
+    new Paragraph({ text: '--------------------------------------------------' }),
+
+    // 5. Outreach Strategy
+    new Paragraph({
+      text: '5. OUTREACH STRATEGY & INMAIL',
+      heading: HeadingLevel.HEADING_2
+    }),
+    new Paragraph({
+      text: 'Value Proposition Selling Hooks',
+      heading: HeadingLevel.HEADING_3
+    }),
+    ...outreachStrategy.valueProposition.map((vp, idx) =>
+      new Paragraph({ children: [new TextRun({ text: `${idx + 1}. `, bold: true }), new TextRun(vp)] })
+    ),
+    new Paragraph({
+      text: 'Cold Outreach InMail Template',
+      heading: HeadingLevel.HEADING_3
+    }),
+    new Paragraph({ children: [new TextRun({ text: 'Subject: ', bold: true }), new TextRun(outreachStrategy.inMailTemplate.subject)] }),
+    new Paragraph({ children: [new TextRun(outreachStrategy.inMailTemplate.body)] }),
+    new Paragraph({ text: '--------------------------------------------------' }),
+
+    // 6. Day-1 Execution Checklist
+    new Paragraph({
+      text: '6. DAY-1 IMMEDIATE CHECKLIST',
+      heading: HeadingLevel.HEADING_2
+    }),
+    ...dayOneChecklist.map((c, i) =>
+      new Paragraph({
+        children: [
+          new TextRun({ text: `${i + 1}. [${c.category}] `, bold: true }),
+          new TextRun(c.text)
+        ]
+      })
+    )
+  ];
 
   const doc = new Document({
     sections: [{ properties: {}, children: paragraphs }]
@@ -145,3 +383,4 @@ export async function downloadDOCXFile(plan: SourcingActionPlan) {
   link.click();
   document.body.removeChild(link);
 }
+
